@@ -600,11 +600,8 @@ async function loginOwner(idNumber, hashed){
     //BCRYPT verify password
     bcrypt.compare(result.password, hashed, function(err, result){
       if(result == true){
-        console.log("Access granted. Welcome")
-        console.log("Password:", hashed)
-        console.log("Role:", role)
+        res.send("Access granted. Welcome/nPassword:",hashed,"/nRole:", role,"/nToken:", token)
         token = jwt.sign({idNumber: idNumber, role: role}, privatekey);
-        console.log("Token:", token);
       }else{
         console.log("Wrong password")
       }
