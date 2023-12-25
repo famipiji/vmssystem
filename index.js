@@ -200,7 +200,7 @@ app.post('/registerOwner', async function (req, res){
         )
       )
     }else{
-      console.log("You have no access to register an owner!")
+        console.log("You have no access to register an owner!")
     }
 })
 })
@@ -298,7 +298,7 @@ app.post('/checkinVisitor', async function (req, res) {
   
   jwt.verify(token, privatekey, async function(err, decoded) {
     if (err) {
-      console.log("Error decoding token:", err);
+        console.log("Error decoding token:", err);
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
@@ -327,7 +327,7 @@ app.post('/checkinVisitor', async function (req, res) {
         )
       );
     } else {
-      console.log("You have no access to check in a visitor!");
+        console.log("You have no access to check in a visitor!");
     }
   });
 });
@@ -488,7 +488,7 @@ app.post('/changePassNumber', async function (req, res) {
 
   jwt.verify(token, privatekey, async function(err, decoded) {
     if (err) {
-      console.log("Error decoding token:", err);
+        console.log("Error decoding token:", err);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -499,7 +499,7 @@ app.post('/changePassNumber', async function (req, res) {
       await changePassNumber(savedidNumber, newpassNumber);
       res.send(req.body);
     } else {
-      console.log("You have no access to change the pass number!");
+        console.log("You have no access to change the pass number!");
       return res.status(403).json({ error: 'Forbidden' });
     }
   });
@@ -566,15 +566,15 @@ app.post('/checkoutVisitor', async function (req, res) {
       await checkoutVisitor(name, idNumber);
       res.send(req.body);
     } else {
-      console.log("You have no access to check out the visitor!");
-      res.status(403).send("Forbidden");
+        console.log("You have no access to check out the visitor!");
+        res.status(403).send("Forbidden");
     }
   });
 });
 
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on port ${port}`)
 })
 
 //////////FUNCTION//////////
@@ -609,7 +609,7 @@ async function loginOwner(idNumber, hashed){
     });
   } 
   else {
-      console.log("Owner not registered")
+        console.log("Owner not registered")
   }
 }
 
@@ -633,7 +633,7 @@ async function loginSecurity(idNumber, hashed){
     });
   }
   else {
-      console.log("Security not registered")
+    console.log("Security not registered")
   }
 }
 
@@ -666,7 +666,7 @@ async function checkinVisitor(newrole, newname, newidNumber, newdocumentType, ne
   await client.connect()
   const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: newname})
   if(exist){
-      console.log("Visitor has already checked in")
+        console.log("Visitor has already checked in")
   }else{
       await createListing2(client,
         {
@@ -713,7 +713,7 @@ async function checkoutVisitor(oldname, oldidNumber){
       await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
       console.log("Visitor account deleted successfully.")
     }else{
-      console.log("ID number is incorrect")
+        console.log("ID number is incorrect")
     }
   }else{
     console.log("Visitor does not exist.")
