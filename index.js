@@ -45,11 +45,14 @@ var checkpassword;
 
 app.use(express.json());
 
+//login as Host
 /**
  * @swagger
- * /loginOwner:
+ * /loginHost:
  *   post:
- *     summary: Log in as an owner
+ *     summary: Authenticate Host
+ *     description: Login with identification number and password
+ *     tags: [Host]
  *     requestBody:
  *       required: true
  *       content:
@@ -63,51 +66,20 @@ app.use(express.json());
  *                 type: string
  *     responses:
  *       '200':
- *         description: Successful login
+ *         description: Login successful
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was successful
- *                 token:
- *                   type: string
- *                   description: JWT token for authentication
+ *               type: string
  *       '400':
- *         description: Bad Request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was unsuccessful
- *                 message:
- *                   type: string
- *                   description: Error message
- *       '500':
- *         description: Internal Server Error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was unsuccessful
- *                 message:
- *                   type: string
- *                   description: Error message
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
  */
-//login as Owner
-app.post( '/loginOwner',async function (req, res) {
-  let {idNumber, password} = req.body
-  const salt = await bcrypt.genSalt(saltRounds)
-  hashed = await bcrypt.hash(password, salt)
-  await loginOwner(idNumber, hashed, res)
+app.post( '/loginHost',async function (req, res) {
+  let {idNumber, password} = req.body;
+  const hashed = await generateHash(password);
+  await loginHost(res, idNumber, hashed)
 })
 /**
  * @swagger
@@ -647,45 +619,25 @@ async function createListing2(client, newListing){
   console.log(`New listing created with the following id: ${result.insertedId}`);
 }
 
-//READ(login as Owner)
-async function loginOwner(idNumber, hashed, res) {
-  try {
-    await client.connect();
-    const result = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
-
-    if (result) {
-      // BCRYPT verify password
-      bcrypt.compare(result.password, hashed, function(err, passwordMatch) {
+//READ(login as Host)
+async function loginHost(res, idNumber, hashed){
+  await client.connect()
+  const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
+    if (exist) {
+        const passwordMatch = await bcrypt.compare(exist.password, hashed);
         if (passwordMatch) {
-          const role = result.role;
-          const token = jwt.sign({ idNumber: idNumber, role: role }, privatekey);
-          res.send({
-            success: true,
-            token: token
-          });
+            console.log("Login Success!\nRole: "+ exist.role);
+            logs(idNumber, exist.name, exist.role);
+            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+            res.send("Token: " + token);
         } else {
-          res.send({
-            success: false,
-            message: "Wrong password"
-          });
+            console.log("Wrong password!");
         }
-      });
     } else {
-      res.send({
-        success: false,
-        message: "Owner not registered"
-      });
+        console.log("Username not exist!");
     }
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).send({
-      success: false,
-      message: "Internal Server Error"
-    });
-  } finally {
-    await client.close();
-  }
 }
+
 
 
 //READ(login as Security)
@@ -793,7 +745,7 @@ function verifyToken(req, res, next) {
     next();
   });
 }
-//visitor to retrieve password
+//Visitor to retrieve data
 async function retrieveVisitor(res, idNumber, password){
   await client.connect();
     const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
