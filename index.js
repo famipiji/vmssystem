@@ -619,44 +619,23 @@ async function createListing2(client, newListing){
   console.log(`New listing created with the following id: ${result.insertedId}`);
 }
 
-//READ(login as Owner)
-async function loginOwner(idNumber, hashed, res) {
-  try {
-    await client.connect();
-    const result = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
-
-    if (result) {
-      // BCRYPT verify password
-      bcrypt.compare(result.password, hashed, function(err, passwordMatch) {
+//READ(login as Host)
+async function loginHost(res, idNumber, hashed){
+  await client.connect()
+  const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
+    if (exist) {
+        const passwordMatch = await bcrypt.compare(exist.password, hashed);
         if (passwordMatch) {
-          const role = result.role;
-          const token = jwt.sign({ idNumber: idNumber, role: role }, privatekey);
-          res.send({
-            success: true,
-            token: token
-          });
+            console.log("Login Success!\nRole: "+ exist.role);
+            logs(idNumber, exist.name, exist.role);
+            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+            res.send("Token: " + token);
         } else {
-          res.send({
-            success: false,
-            message: "Wrong password"
-          });
+            console.log("Wrong password!");
         }
-      });
     } else {
-      res.send({
-        success: false,
-        message: "Owner not registered"
-      });
+        console.log("Username not exist!");
     }
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).send({
-      success: false,
-      message: "Internal Server Error"
-    });
-  } finally {
-    await client.close();
-  }
 }
 
 
