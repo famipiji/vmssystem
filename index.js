@@ -45,11 +45,14 @@ var checkpassword;
 
 app.use(express.json());
 
+//login as Host
 /**
  * @swagger
- * /loginOwner:
+ * /loginHost:
  *   post:
- *     summary: Log in as an owner
+ *     summary: Authenticate Host
+ *     description: Login with identification number and password
+ *     tags: [Host]
  *     requestBody:
  *       required: true
  *       content:
@@ -63,51 +66,20 @@ app.use(express.json());
  *                 type: string
  *     responses:
  *       '200':
- *         description: Successful login
+ *         description: Login successful
  *         content:
- *           application/json:
+ *           text/plain:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was successful
- *                 token:
- *                   type: string
- *                   description: JWT token for authentication
+ *               type: string
  *       '400':
- *         description: Bad Request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was unsuccessful
- *                 message:
- *                   type: string
- *                   description: Error message
- *       '500':
- *         description: Internal Server Error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: Indicates whether the login was unsuccessful
- *                 message:
- *                   type: string
- *                   description: Error message
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
  */
-//login as Owner
-app.post( '/loginOwner',async function (req, res) {
-  let {idNumber, password} = req.body
-  const salt = await bcrypt.genSalt(saltRounds)
-  hashed = await bcrypt.hash(password, salt)
-  await loginOwner(idNumber, hashed, res)
+app.post( '/loginHost',async function (req, res) {
+  let {idNumber, password} = req.body;
+  const hashed = await generateHash(password);
+  await loginHost(res, idNumber, hashed)
 })
 /**
  * @swagger
