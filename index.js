@@ -229,7 +229,133 @@ app.post('/registerOwner', async function (req, res){
     }
 })
 })
-
+/**
+ * @swagger
+ * /checkinVisitor:
+ *   post:
+ *     summary: "Check-in Visitor"
+ *     description: "Check in a visitor to the premises"
+ *     tags:
+ *       - Visitor Management
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         description: "Bearer token for authentication"
+ *         required: true
+ *       - in: body
+ *         name: visitorDetails
+ *         description: "Visitor details for check-in"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             role:
+ *               type: string
+ *               description: "Role of the requester (owner or security)"
+ *             name:
+ *               type: string
+ *               description: "Name of the visitor"
+ *             idNumber:
+ *               type: string
+ *               description: "ID number of the visitor"
+ *             documentType:
+ *               type: string
+ *               description: "Type of document presented by the visitor"
+ *             gender:
+ *               type: string
+ *               description: "Gender of the visitor"
+ *             birthDate:
+ *               type: string
+ *               format: date
+ *               description: "Birthdate of the visitor"
+ *             age:
+ *               type: integer
+ *               description: "Age of the visitor"
+ *             documentExpiry:
+ *               type: string
+ *               format: date
+ *               description: "Expiry date of the presented document"
+ *             company:
+ *               type: string
+ *               description: "Company or organization the visitor represents"
+ *             TelephoneNumber:
+ *               type: string
+ *               description: "Telephone number of the visitor"
+ *             vehicleNumber:
+ *               type: string
+ *               description: "Vehicle number of the visitor"
+ *             category:
+ *               type: string
+ *               description: "Category or purpose of the visit"
+ *             ethnicity:
+ *               type: string
+ *               description: "Ethnicity of the visitor"
+ *             photoAttributes:
+ *               type: string
+ *               description: "Additional attributes related to visitor's photo"
+ *             passNumber:
+ *               type: string
+ *               description: "Pass number assigned to the visitor"
+ *     responses:
+ *       '200':
+ *         description: "Visitor checked in successfully"
+ *       '400':
+ *         description: "Invalid token or error in check-in process"
+ *       '401':
+ *         description: "Unauthorized - Invalid token or insufficient permissions"
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
+ *   securityDefinitions:
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       in: header
+ */
+//checkin visitor
+app.post('/checkinVisitor', async function (req, res) {
+  let header = req.headers.authorization;
+  let token = header.split(' ')[1];
+  
+  jwt.verify(token, privatekey, async function(err, decoded) {
+    if (err) {
+        console.log("Error decoding token:", err);
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    console.log(decoded);
+    
+    if (decoded && (decoded.role === "owner" || decoded.role === "security")) {
+      const data = req.body;
+      
+      res.send(
+        checkinVisitor(
+          data.role,
+          data.name,
+          data.idNumber,
+          data.documentType,
+          data.gender,
+          data.birthDate,
+          data.age,
+          data.documentExpiry,
+          data.company,
+          data.TelephoneNumber,
+          data.vehicleNumber,
+          data.category,
+          data.ethnicity,
+          data.photoAttributes,
+          data.passNumber
+        )
+      );
+    } else {
+        console.log("You have no access to check in a visitor!");
+    }
+  });
+});
 /**
  * @swagger
  * /viewVisitor:
@@ -330,7 +456,7 @@ async function viewVisitor(idNumber, role) {
       await client.connect();
       let exist;
 
-      if (role === "Admin" || role === "Staff" || role === "Security") {
+      if (role === "Owner" || role === "Admin" || role === "Security") {
           exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
       } else {
           exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: id });
@@ -413,7 +539,74 @@ app.post('/changePassNumber', async function (req, res) {
       return res.status(403).json({ error: 'Forbidden' });
     }
   });
-});;
+});
+
+/**
+ * @swagger
+ * /checkoutVisitor:
+ *   post:
+ *     summary: "Check-out Visitor"
+ *     description: "Check out a visitor from the premises"
+ *     tags:
+ *       - Visitor Management
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         description: "Bearer token for authentication"
+ *         required: true
+ *       - in: body
+ *         name: visitorCheckout
+ *         description: "Visitor checkout details"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               description: "Name of the visitor"
+ *             idNumber:
+ *               type: string
+ *               description: "ID number of the visitor"
+ *     responses:
+ *       '200':
+ *         description: "Visitor checked out successfully"
+ *       '400':
+ *         description: "Invalid token or error in check-out process"
+ *       '401':
+ *         description: "Unauthorized - Invalid token or insufficient permissions"
+ *       '403':
+ *         description: "Forbidden - User does not have access to check out the visitor"
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
+ *   securityDefinitions:
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       in: header
+ */
+//checkout visitor
+app.post('/checkoutVisitor', async function (req, res) {
+  let header = req.headers.authorization;
+  let token = header.split(' ')[1];
+
+  jwt.verify(token, privatekey, async function(err, decoded) {
+    console.log(decoded);
+
+    if (decoded && decoded.role === "security") {
+      const { name, idNumber } = req.body;
+      await checkoutVisitor(name, idNumber);
+      res.send(req.body);
+    } else {
+        console.log("You have no access to check out the visitor!");
+        res.status(403).send("Forbidden");
+    }
+  });
+});
 
 
 app.listen(port, () => {
