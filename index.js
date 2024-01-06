@@ -445,13 +445,13 @@ app.post('/user/view/visitor', async function(req, res){
   try {
       var decoded = jwt.verify(token, privatekey);
       console.log(decoded.role);
-      res.send(await viewVisitor(decoded.idNumber, decoded.role));
+      res.send(await visitor(decoded.idNumber, decoded.role));
     } catch(err) {
       res.send("Error!");
     }
 });
 
-async function viewVisitor(idNumber, role) {
+async function visitor(idNumber, role) {
   try {
       await client.connect();
       let exist;
