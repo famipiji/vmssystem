@@ -49,33 +49,58 @@ app.use(express.json());
  * @swagger
  * /loginOwner:
  *   post:
- *     summary: "Owner Login"
- *     description: "Login for owner using ID number and password"
- *     tags:
- *       - Authentication
- *     parameters:
- *       - in: body
- *         name: credentials
- *         description: "Owner credentials"
- *         required: true
- *         schema:
- *           type: object
- *           properties:
- *             idNumber:
- *               type: string
- *               description: "Owner's ID number"
- *             password:
- *               type: string
- *               description: "Owner's password"
+ *     summary: Log in as an owner
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *               password:
+ *                 type: string
  *     responses:
  *       '200':
- *         description: "Owner logged in successfully"
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates whether the login was successful
+ *                 token:
+ *                   type: string
+ *                   description: JWT token for authentication
  *       '400':
- *         description: "Invalid credentials or error in login process"
- *     consumes:
- *       - "application/json"
- *     produces:
- *       - "application/json"
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates whether the login was unsuccessful
+ *                 message:
+ *                   type: string
+ *                   description: Error message
+ *       '500':
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates whether the login was unsuccessful
+ *                 message:
+ *                   type: string
+ *                   description: Error message
  */
 //login as Owner
 app.post( '/loginOwner',async function (req, res) {
