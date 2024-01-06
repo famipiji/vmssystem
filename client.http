@@ -5,3 +5,13 @@ Content-Type: application/json
   "idNumber": "20223112",
   "password": "12345"
 }
+
+###
+
+POST http://localhost:3000/viewVisitor
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZE51bWJlciI6IjIwMjIzMTEyIiwicm9sZSI6Ikhvc3QiLCJpYXQiOjE3MDQ1NDUzNjB9.yshHLZIWCsV9tUWC6Ma2lteZ10kHW6fy4_xKqjmDaF4
+
+###
+
+

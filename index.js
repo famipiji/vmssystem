@@ -356,6 +356,43 @@ app.post('/checkinVisitor', async function (req, res) {
     }
   });
 });
+
+//retrieve Visitor info
+/**
+ * @swagger
+ * /retrieveVisitor:
+ *   post:
+ *     summary: Authenticate visitor
+ *     description: Login with identification number and password for a visitor to view pass
+ *     tags: [Visitor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Login successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
+ */
+app.post('/retrieveVisitor', async function(req, res){
+  const {idNumber, password} = req.body;
+  retrieveVisitor(res, idNumber , password);
+});
+
 /**
  * @swagger
  * /viewVisitor:
@@ -755,4 +792,26 @@ function verifyToken(req, res, next) {
     res.user = decoded;
     next();
   });
+}
+//visitor to retrieve password
+async function retrieveVisitor(res, idNumber, password){
+  await client.connect();
+    const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
+    if(exist){
+        if(bcrypt.compare(password,await exist.password)){
+        console.log("Welcome!");
+        token = jwt.sign({ idNumber: idNumber, role: exist.role}, privatekey);
+        res.send({
+          "Token": token,
+          "Visitor Info": exist
+        });
+        
+        res.send(exist);
+        await logs(id, exist.name, exist.role);
+        }else{
+            console.log("Wrong password!")
+        }
+    }else{
+        console.log("Visitor not exist!");
+    }
 }
