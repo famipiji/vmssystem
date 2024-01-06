@@ -550,6 +550,13 @@ app.listen(port, () => {
 
 //////////FUNCTIONS//////////
 
+//Generate hash password
+async function generateHash(password){
+  const saltRounds = 10
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  return hashedPassword;
+}
+
 //CREATE(createListing for Host)
 async function createListing1(client, newListing){
   const result = await client.db("assignmentCondo").collection("owner").insertOne(newListing);
@@ -731,7 +738,7 @@ async function changePassNumber(savedidNumber, newpassNumber){
 }
 
 //DELETE(delete visitor)
-async function checkoutVisitor(oldname, oldidNumber){
+async function deleteVisitor(oldname, oldidNumber){
   await client.connect()
   const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: oldname})
   if(exist){
@@ -740,7 +747,7 @@ async function checkoutVisitor(oldname, oldidNumber){
       await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
       console.log("Visitor account deleted successfully.")
     }else{
-        console.log("ID number is incorrect")
+      console.log("ID number is incorrect")
     }
   }else{
     console.log("Visitor does not exist.")
