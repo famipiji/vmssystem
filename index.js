@@ -351,6 +351,91 @@ app.post('/viewVisitor', async function(req, res){
     }
 })
 
+//register visitor
+/**
+ * @swagger
+ * /createpassVisitor:
+ *   post:
+ *     summary: Create a visitor pass
+ *     description: Create a new visitor pass (accessible to Hosts and security personnel)
+ *     tags: [Host, Security]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               idNumber:
+ *                 type: string
+ *               documentType:
+ *                 type: string
+ *               gender:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *               age:
+ *                 type: number
+ *               documentExpiry:
+ *                 type: string
+ *               company:
+ *                 type: string
+ *               TelephoneNumber:
+ *                 type: string
+ *               vehicleNumber:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               ethnicity:
+ *                 type: string
+ *               photoAttributes:
+ *                 type: string
+ *               passNumber:
+ *                 type: string
+ *               password:
+ *                type: string
+ *     responses:
+ *       '200':
+ *         description: Visitor registered successfully
+ *       '401':
+ *         description: Unauthorized - Invalid or missing token
+ *       '403':
+ *         description: Forbidden - User does not have access to register a visitor
+ */
+app.post('/createpassVisitor', async function(req, res){
+  var token = req.header('Authorization').split(" ")[1];
+  let decoded;
+
+  try {
+      decoded = jwt.verify(token, privatekey);
+      console.log(decoded.role);
+  } catch(err) {
+      console.log("Error decoding token:", err.message);
+      return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
+  }
+
+  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
+      const {
+          role, name, idNumber, documentType, gender, birthDate, age, 
+          documentExpiry, company, TelephoneNumber, vehicleNumber, 
+          category, ethnicity, photoAttributes, passNumber, password
+      } = req.body;
+
+      await createpassVisitor(role, name, idNumber, documentType, gender, birthDate, 
+                              age, documentExpiry, company, TelephoneNumber, 
+                              vehicleNumber, category, ethnicity, photoAttributes, 
+                              passNumber, password);
+  } else {
+      console.log("Access Denied!");
+      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
+  }
+});
 
 /**
  * @swagger
