@@ -548,9 +548,9 @@ app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
 
-//////////FUNCTION//////////
+//////////FUNCTIONS//////////
 
-//CREATE(createListing for owner)
+//CREATE(createListing for Host)
 async function createListing1(client, newListing){
   const result = await client.db("assignmentCondo").collection("owner").insertOne(newListing);
   console.log(`New listing created with the following id: ${result.insertedId}`);
