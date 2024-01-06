@@ -581,6 +581,29 @@ async function loginHost(res, idNumber, hashed){
     }
 }
 
+//READ(retrieve pass as visitor)
+async function retrieveVisitor(res, idNumber, password){
+  await client.connect();
+    const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
+    if(exist){
+        if(bcrypt.compare(password,await exist.password)){
+        console.log("Welcome!");
+        token = jwt.sign({ idNumber: idNumber, role: exist.role}, privatekey);
+        res.send({
+          "Token": token,
+          "Visitor Info": exist
+        });
+        
+        res.send(exist);
+        await logs(id, exist.name, exist.role);
+        }else{
+            console.log("Wrong password!")
+        }
+    }else{
+        console.log("Visitor not exist!");
+    }
+}
+
 
 //READ(login as Security)
 async function loginSecurity(idNumber, hashed){
