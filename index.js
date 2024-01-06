@@ -553,13 +553,13 @@ app.listen(port, () => {
 //CREATE(createListing for Host)
 async function createListing1(client, newListing){
   const result = await client.db("assignmentCondo").collection("owner").insertOne(newListing);
-  console.log(`New listing created with the following id: ${result.insertedId}`);
+  console.log(`New listing created with this id: ${result.insertedId}`);
 }
 
 //CREATE(createListing for visitor)
 async function createListing2(client, newListing){
   const result = await client.db("assignmentCondo").collection("visitor").insertOne(newListing);
-  console.log(`New listing created with the following id: ${result.insertedId}`);
+  console.log(`New listing created with this id: ${result.insertedId}`);
 }
 
 //READ(login as Host)
