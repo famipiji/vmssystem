@@ -359,7 +359,7 @@ app.post('/checkinVisitor', async function (req, res) {
 /**
  * @swagger
  * /viewVisitor:
- *   get:
+ *   post:
  *     summary: "View Visitors"
  *     description: "View a list of visitors"
  *     tags:
