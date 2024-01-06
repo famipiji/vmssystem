@@ -82,7 +82,7 @@ app.post( '/loginOwner',async function (req, res) {
   let {idNumber, password} = req.body
   const salt = await bcrypt.genSalt(saltRounds)
   hashed = await bcrypt.hash(password, salt)
-  await loginOwner(idNumber, hashed)
+  await loginOwner(idNumber, hashed, res)
 })
 /**
  * @swagger
@@ -592,26 +592,45 @@ async function createListing2(client, newListing){
 }
 
 //READ(login as Owner)
-async function loginOwner(idNumber, hashed){
-  await client.connect()
-  const result = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
-  const role = await result.role
-  if (result) {
-    //BCRYPT verify password
-    bcrypt.compare(result.password, hashed, function(err, result){
-      if(result == true){
-        //res.send("Access granted. Welcome/nPassword:",hashed,"/nRole:", role,"/nToken:", token)
-        token = jwt.sign({idNumber: idNumber, role: role}, privatekey);
-        res.send(token)
-      }else{
-        console.log("Wrong password")
-      }
+async function loginOwner(idNumber, hashed, res) {
+  try {
+    await client.connect();
+    const result = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
+
+    if (result) {
+      // BCRYPT verify password
+      bcrypt.compare(result.password, hashed, function(err, passwordMatch) {
+        if (passwordMatch) {
+          const role = result.role;
+          const token = jwt.sign({ idNumber: idNumber, role: role }, privatekey);
+          res.send({
+            success: true,
+            token: token
+          });
+        } else {
+          res.send({
+            success: false,
+            message: "Wrong password"
+          });
+        }
+      });
+    } else {
+      res.send({
+        success: false,
+        message: "Owner not registered"
+      });
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).send({
+      success: false,
+      message: "Internal Server Error"
     });
-  } 
-  else {
-        console.log("Owner not registered")
+  } finally {
+    await client.close();
   }
 }
+
 
 //READ(login as Security)
 async function loginSecurity(idNumber, hashed){
