@@ -1,13 +1,17 @@
+//mongoDB
+const { MongoClient} = require("mongodb");
+const uri = "mongodb+srv://fakhrul:1235@clusterfakhrul.bigkwnk.mongodb.net/?retryWrites=true&w=majority"
+const  client = new MongoClient(uri)
 //express
 const express = require('express')
-const app = express()
-const port = process.env.PORT || 3000;
-app.use(express.json())
 var jwt = require('jsonwebtoken')
+const app = express()
+const port = process.env.PORT ||3000
 
 //swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+
 const options = {
     definition: {
         openapi: '3.0.0',
@@ -16,71 +20,30 @@ const options = {
             version: '1.0.0'
         },
         components: {  // Add 'components' section
-          securitySchemes: {  // Define 'securitySchemes'
-              bearerAuth: {  // Define 'bearerAuth'
-                  type: 'http',
-                  scheme: 'bearer',
-                  bearerFormat: 'JWT'
-              }
-          }
-      }
+            securitySchemes: {  // Define 'securitySchemes'
+                bearerAuth: {  // Define 'bearerAuth'
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT'
+                }
+            }
+        }
     },
     apis: ['./index.js'],
 };
+
 const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-//mongoDB
-const { MongoClient} = require("mongodb");
-const uri = "mongodb+srv://fakhrul:1235@clusterfakhrul.bigkwnk.mongodb.net/?retryWrites=true&w=majority"
-const  client = new MongoClient(uri)
-
 //bcrypt
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 var hashed;
 //token
-var token;
-const privatekey = "PRXWGaming";
+var token
+const privatekey = "PRXWGaming"
 var checkpassword;
 
 app.use(express.json());
-
-//retrieve Visitor info
-/**
- * @swagger
- * /retrieveVisitor:
- *   post:
- *     summary: Authenticate visitor
- *     description: Login with identification number and password for a visitor to view pass
- *     tags: [Visitor]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
- */
-app.post('/retrieveVisitor', async function(req, res){
-  const {idNumber, password} = req.body;
-  retrieveVisitor(res, idNumber , password);
-});
 
 //login as Host
 /**
@@ -118,42 +81,44 @@ app.post( '/loginHost',async function (req, res) {
   const hashed = await generateHash(password);
   await loginHost(res, idNumber, hashed)
 })
-
-//login as Security
 /**
  * @swagger
  * /loginSecurity:
  *   post:
- *     summary: Authenticate security personnel
- *     description: Login with identification number and password
- *     tags: [Security]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *               password:
- *                 type: string
+ *     summary: "Security Login"
+ *     description: "Login for security personnel using ID number and password"
+ *     tags:
+ *       - Authentication
+ *     parameters:
+ *       - in: body
+ *         name: credentials
+ *         description: "Security personnel credentials"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             idNumber:
+ *               type: string
+ *               description: "Security personnel's ID number"
+ *             password:
+ *               type: string
+ *               description: "Security personnel's password"
  *     responses:
  *       '200':
- *         description: Login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
+ *         description: "Security personnel logged in successfully"
  *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
+ *         description: "Invalid credentials or error in login process"
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
  */
+//login as Security
 app.post( '/loginSecurity',async function (req, res) {
   let {idNumber, password} = req.body
-  const hashed = await generateHash(password);
-  await loginSecurity(res, idNumber, hashed)
+  const salt = await bcrypt.genSalt(saltRounds)
+  hashed = await bcrypt.hash(password, salt)
+  await loginSecurity(idNumber, hashed)
 })
 
 //login as Admin
@@ -192,6 +157,7 @@ app.post( '/loginAdmin',async function (req, res) {
   const hashed = await generateHash(password);
   await loginAdmin(res, idNumber, hashed)
 })
+
 
 //register Host
 /**
@@ -254,232 +220,285 @@ app.post('/registerHost', async function (req, res){
 })
 
 
+//retrieve Visitor info
+/**
+ * @swagger
+ * /retrieveVisitor:
+ *   post:
+ *     summary: Authenticate visitor
+ *     description: Login with identification number and password for a visitor to view pass
+ *     tags: [Visitor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Login successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
+ */
+app.post('/retrieveVisitor', async function(req, res){
+  const {idNumber, password} = req.body;
+  retrieveVisitor(res, idNumber , password);
+});
 
-//View Visitor
 /**
  * @swagger
  * /viewVisitor:
  *   post:
- *     summary: "View visitors"
- *     description: "Retrieve visitors based on user role"
+ *     summary: "View Visitors"
+ *     description: "View a list of visitors"
  *     tags:
- *       - Host & Security
+ *       - Visitor Management
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         description: "Bearer token for authentication"
+ *         required: true
  *     responses:
  *       '200':
- *         description: "Visitors retrieved successfully"
+ *         description: "List of visitors retrieved successfully"
+ *         schema:
+ *           type: array
+ *           items:
+ *             $ref: '#/definitions/Visitor'
  *       '400':
  *         description: "Invalid token or error in retrieving visitors"
  *       '401':
  *         description: "Unauthorized - Invalid token or insufficient permissions"
- *     consumes:
- *       - "application/json"
  *     produces:
  *       - "application/json"
  *   securityDefinitions:
- *     JWT:
- *       type: "apiKey"
- *       name: "Authorization"
- *       in: "header"
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       in: header
+ * definitions:
+ *   Visitor:
+ *     type: object
+ *     properties:
+ *       name:
+ *         type: string
+ *         description: "Name of the visitor"
+ *       idNumber:
+ *         type: string
+ *         description: "ID number of the visitor"
+ *       documentType:
+ *         type: string
+ *         description: "Type of document presented by the visitor"
+ *       gender:
+ *         type: string
+ *         description: "Gender of the visitor"
+ *       birthDate:
+ *         type: string
+ *         format: date
+ *         description: "Birthdate of the visitor"
+ *       age:
+ *         type: integer
+ *         description: "Age of the visitor"
+ *       documentExpiry:
+ *         type: string
+ *         format: date
+ *         description: "Expiry date of the presented document"
+ *       company:
+ *         type: string
+ *         description: "Company or organization the visitor represents"
+ *       TelephoneNumber:
+ *         type: string
+ *         description: "Telephone number of the visitor"
+ *       vehicleNumber:
+ *         type: string
+ *         description: "Vehicle number of the visitor"
+ *       category:
+ *         type: string
+ *         description: "Category or purpose of the visit"
+ *       ethnicity:
+ *         type: string
+ *         description: "Ethnicity of the visitor"
+ *       photoAttributes:
+ *         type: string
+ *         description: "Additional attributes related to visitor's photo"
+ *       passNumber:
+ *         type: string
+ *         description: "Pass number assigned to the visitor"
  */
+//view visitor 
 app.post('/viewVisitor', async function(req, res){
   var token = req.header('Authorization').split(" ")[1];
   try {
       var decoded = jwt.verify(token, privatekey);
       console.log(decoded.role);
-      res.send(await viewVisitor(decoded.idNumber, decoded.role));
+      res.send(await visitor(decoded.idNumber, decoded.role));
     } catch(err) {
       res.send("Error!");
     }
-});
+})
 
 
-//register visitor
-/**
- * @swagger
- * /createpassVisitor:
- *   post:
- *     summary: Create a visitor pass
- *     description: Create a new visitor pass (accessible to Hosts and security personnel)
- *     tags: [Host, Security]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               role:
- *                 type: string
- *               name:
- *                 type: string
- *               idNumber:
- *                 type: string
- *               documentType:
- *                 type: string
- *               gender:
- *                 type: string
- *               birthDate:
- *                 type: string
- *               age:
- *                 type: number
- *               documentExpiry:
- *                 type: string
- *               company:
- *                 type: string
- *               TelephoneNumber:
- *                 type: string
- *               vehicleNumber:
- *                 type: string
- *               category:
- *                 type: string
- *               ethnicity:
- *                 type: string
- *               photoAttributes:
- *                 type: string
- *               passNumber:
- *                 type: string
- *               password:
- *                type: string
- *     responses:
- *       '200':
- *         description: Visitor registered successfully
- *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '403':
- *         description: Forbidden - User does not have access to register a visitor
- */
-app.post('/createpassVisitor', async function(req, res){
-  var token = req.header('Authorization').split(" ")[1];
-  let decoded;
-
-  try {
-      decoded = jwt.verify(token, privatekey);
-      console.log(decoded.role);
-  } catch(err) {
-      console.log("Error decoding token:", err.message);
-      return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
-  }
-
-  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
-      const {
-          role, name, idNumber, documentType, gender, birthDate, age, 
-          documentExpiry, company, TelephoneNumber, vehicleNumber, 
-          category, ethnicity, photoAttributes, passNumber, password
-      } = req.body;
-
-      await createpassVisitor(role, name, idNumber, documentType, gender, birthDate, 
-                              age, documentExpiry, company, TelephoneNumber, 
-                              vehicleNumber, category, ethnicity, photoAttributes, 
-                              passNumber, password);
-  } else {
-      console.log("Access Denied!");
-      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
-  }
-});
-
-
-
-//change pass number
 /**
  * @swagger
  * /changePassNumber:
  *   post:
- *     summary: Change pass number
- *     description: Change pass number for a user
- *     tags: [Host, Security]
+ *     summary: "Change Pass Number"
+ *     description: "Change the pass number for a user with security role"
+ *     tags:
+ *       - Security Management
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               savedidNumber:
- *                 type: string
- *               newpassNumber:
- *                 type: string
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         description: "Bearer token for authentication"
+ *         required: true
+ *       - in: body
+ *         name: passNumberChange
+ *         description: "Pass number change details"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             savedidNumber:
+ *               type: string
+ *               description: "ID number of the user whose pass number needs to be changed"
+ *             newpassNumber:
+ *               type: string
+ *               description: "New pass number to be assigned to the user"
  *     responses:
  *       '200':
- *         description: Pass number changed successfully
+ *         description: "Pass number changed successfully"
+ *       '400':
+ *         description: "Invalid token or error in pass number change process"
  *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '500':
- *         description: Internal Server Error
+ *         description: "Unauthorized - Invalid token or insufficient permissions"
+ *       '403':
+ *         description: "Forbidden - User does not have access to change the pass number"
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
+ *   securityDefinitions:
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       in: header
  */
-app.post('/changePassNumber', async function (req, res){
-  const {savedidNumber, newpassNumber} = req.body
-  await changePhoneNumber(savedidNumber, newpassNumber)
-  res.send(req.body)
-})
+//change pass number
+app.post('/changePassNumber', async function (req, res) {
+  let header = req.headers.authorization;
+  let token = header.split(' ')[1];
 
-//delete visitor
+  jwt.verify(token, privatekey, async function(err, decoded) {
+    if (err) {
+        console.log("Error decoding token:", err);
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log(decoded);
+
+    if (decoded.role === "security") {
+      const { savedidNumber, newpassNumber } = req.body;
+      await changePassNumber(savedidNumber, newpassNumber);
+      res.send(req.body);
+    } else {
+        console.log("You have no access to change the pass number!");
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+  });
+});
+
 /**
  * @swagger
- * /deleteVisitor:
+ * /checkoutVisitor:
  *   post:
- *     summary: Delete a visitor
- *     description: Delete a visitor by name and ID number
- *     tags: [Host]
+ *     summary: "Check-out Visitor"
+ *     description: "Check out a visitor from the premises"
+ *     tags:
+ *       - Visitor Management
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               idNumber:
- *                 type: string
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         description: "Bearer token for authentication"
+ *         required: true
+ *       - in: body
+ *         name: visitorCheckout
+ *         description: "Visitor checkout details"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               description: "Name of the visitor"
+ *             idNumber:
+ *               type: string
+ *               description: "ID number of the visitor"
  *     responses:
  *       '200':
- *         description: Visitor deleted successfully
+ *         description: "Visitor checked out successfully"
+ *       '400':
+ *         description: "Invalid token or error in check-out process"
  *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '500':
- *         description: Internal Server Error
+ *         description: "Unauthorized - Invalid token or insufficient permissions"
+ *       '403':
+ *         description: "Forbidden - User does not have access to check out the visitor"
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
+ *   securityDefinitions:
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       in: header
  */
-app.post('/deleteVisitor', async function (req, res){
-  const {name, idNumber} = req.body
-  await deleteVisitor(name, idNumber)
-  res.send(req.body)
-})
+//checkout visitor
+app.post('/checkoutVisitor', async function (req, res) {
+  let header = req.headers.authorization;
+  let token = header.split(' ')[1];
+
+  jwt.verify(token, privatekey, async function(err, decoded) {
+    console.log(decoded);
+
+    if (decoded && decoded.role === "security") {
+      const { name, idNumber } = req.body;
+      await checkoutVisitor(name, idNumber);
+      res.send(req.body);
+    } else {
+        console.log("You have no access to check out the visitor!");
+        res.status(403).send("Forbidden");
+    }
+  });
+});
+
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on port ${port}`)
 })
 
 //////////FUNCTION//////////
 
-async function logs(idNumber, name, role){
-  // Get the current date and time
-  const currentDate = new Date();
-
-  // Format the date
-  const formattedDate = currentDate.toLocaleDateString(); // Format: MM/DD/YYYY
-
-  // Format the time
-  const formattedTime = currentDate.toLocaleTimeString(); // Format: HH:MM:SS
-  await client.connect()
-  client.db("VMS").collection("Logs").insertOne({
-      idNumber: idNumber,
-      name: name,
-      Type: role,
-      date: formattedDate,
-      entry_time: formattedTime,
-      exit_time: "pending"
-  })
-}
-
-//CREATE(createListing for Host)
+//CREATE(createListing for owner)
 async function createListing1(client, newListing){
   const result = await client.db("assignmentCondo").collection("owner").insertOne(newListing);
   console.log(`New listing created with the following id: ${result.insertedId}`);
@@ -489,42 +508,6 @@ async function createListing1(client, newListing){
 async function createListing2(client, newListing){
   const result = await client.db("assignmentCondo").collection("visitor").insertOne(newListing);
   console.log(`New listing created with the following id: ${result.insertedId}`);
-}
-
-//READ(retrieve pass as visitor)
-async function retrieveVisitor(res, idNumber, password){
-  await client.connect();
-    const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
-    if(exist){
-        if(bcrypt.compare(password,await exist.password)){
-        console.log("Welcome!");
-        token = jwt.sign({ idNumber: idNumber, role: exist.role}, privatekey);
-        res.send({
-          "Token": token,
-          "Visitor Info": exist
-        });
-        
-        res.send(exist);
-        await logs(id, exist.name, exist.role);
-        }else{
-            console.log("Wrong password!")
-        }
-    }else{
-        console.log("Visitor not exist!");
-    }
-}
-
-//READ(view all visitors)
-async function viewVisitor(idNumber, role){
-  var exist;
-  await client.connect();
-  if(role == "Host" || role == "security"){
-    exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
-  }
-  else if(role == "visitor"){
-    exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
-  }
-  return exist;
 }
 
 //READ(login as Host)
@@ -546,50 +529,37 @@ async function loginHost(res, idNumber, hashed){
     }
 }
 
+
 //READ(login as Security)
-async function loginSecurity(res, idNumber, hashed){
+async function loginSecurity(idNumber, hashed){
   await client.connect()
-  const exist = await client.db("assignmentCondo").collection("security").findOne({ idNumber: idNumber });
-    if (exist) {
-        const passwordMatch = await bcrypt.compare(exist.password, hashed);
-        if (passwordMatch) {
-            console.log("Login Success!\nRole: "+ exist.role);
-            logs(idNumber, exist.name, exist.role);
-            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
-            res.send("Token: " + token);
-        } else {
-            console.log("Wrong password!");
-        }
-    } else {
-        console.log("Username not exist!");
-    }
+  const result = await client.db("assignmentCondo").collection("security").findOne({ idNumber: idNumber });
+  const role = await result.role
+  if (result) {
+    //BCRYPT verify password
+    bcrypt.compare(result.password, hashed, function(err, result){
+      if(result == true){
+        console.log("Access granted. Welcome")
+        console.log("Password:", hashed)
+        console.log("Role:", role)
+        token = jwt.sign({idNumber: idNumber, role: role}, privatekey);
+        console.log("Token:", token);
+      }else{
+        console.log("Wrong password")
+      }
+    });
+  }
+  else {
+    console.log("Security not registered")
+  }
 }
 
-//READ(login as Admin)
-async function loginAdmin(res,idNumber, hashed){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
-    if (exist) {
-        const passwordMatch = await bcrypt.compare(exist.password, hashed);
-        if (passwordMatch) {
-            console.log("Login Success!\nRole: "+ exist.role);
-            logs(idNumber, exist.name, exist.role);
-            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
-            res.send("Token: " + token);
-        } else {
-            console.log("Wrong password!");
-        }
-    } else {
-        console.log("Username not exist!");
-    }
-}
-
-//CREATE(register Host)
-async function registerHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber){
+//CREATE(register Owner)
+async function registerOwner(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber){
   await client.connect()
   const exist = await client.db("assignmentCondo").collection("owner").findOne({idNumber: newidNumber})
   if(exist){
-    console.log("Host has already registered")
+    console.log("Owner has already registered")
   }else{
     await createListing1(client,
       {
@@ -601,47 +571,24 @@ async function registerHost(newrole, newname, newidNumber, newemail, newpassword
         phoneNumber: newphoneNumber
       }
     );
-    console.log("Host registered sucessfully")
+    console.log("Owner registered sucessfully")
   }
 }
-
-//CREATE(register Visitor)
-async function createpassVisitor(newrole, newname, newidNumber, newdocumentType, newgender, newbirthDate, 
-                        newage, newdocumentExpiry, newcompany, newTelephoneNumber, newvehicleNumber,
-                        newcategory, newethnicity, newphotoAttributes, newpassNumber, password){
-  //TODO: Check if username exist
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: newidNumber})
-  //hashed = await bcrypt.hash(password, 10);
-  if(exist){
-      console.log("Visitor has already registered")
-  }else{
-      await client.db("assignmentCondo").collection("visitor").insertOne(
-        {
-          role: newrole,
-          name: newname,
-          idNumber: newidNumber,
-          documentType: newdocumentType,
-          gender: newgender,
-          birthDate:newbirthDate,
-          age: newage,
-          documentExpiry: newdocumentExpiry,
-          company: newcompany,
-          TelephoneNumber: newTelephoneNumber,
-          vehicleNumber: newvehicleNumber,
-          category: newcategory,
-          ethnicity: newethnicity,
-          photoAttributes: newphotoAttributes,
-          passNumber: newpassNumber,
-          password: password 
-        }
-      );
-      console.log("Registered successfully!")
+//view visitor
+async function visitor(idNumber, role) {
+  var exist;
+  await client.connect();
+  if(role == "Host" || role == "security"){
+    exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
   }
-} 
+  else if(role == "visitor"){
+    exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
+  }
+  return exist;
+}
 
 //UPDATE(change pass number)
-async function changePhoneNumber(savedidNumber, newpassNumber){
+async function changePassNumber(savedidNumber, newpassNumber){
   await client.connect()
   const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: savedidNumber})
   if(exist){
@@ -653,7 +600,7 @@ async function changePhoneNumber(savedidNumber, newpassNumber){
 }
 
 //DELETE(delete visitor)
-async function deleteVisitor(oldname, oldidNumber){
+async function checkoutVisitor(oldname, oldidNumber){
   await client.connect()
   const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: oldname})
   if(exist){
@@ -662,18 +609,11 @@ async function deleteVisitor(oldname, oldidNumber){
       await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
       console.log("Visitor account deleted successfully.")
     }else{
-      console.log("ID number is incorrect")
+        console.log("ID number is incorrect")
     }
   }else{
     console.log("Visitor does not exist.")
   }
-}
-
-//Generate hash password
-async function generateHash(password){
-  const saltRounds = 10
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-  return hashedPassword;
 }
 
 //Verify JWT Token
