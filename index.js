@@ -440,7 +440,7 @@ app.post('/checkinVisitor', async function (req, res) {
  *         description: "Pass number assigned to the visitor"
  */
 //view visitor 
-app.post('/user/view/visitor', async function(req, res){
+app.post('/viewVisitor', async function(req, res){
   var token = req.header('Authorization').split(" ")[1];
   try {
       var decoded = jwt.verify(token, privatekey);
@@ -449,26 +449,9 @@ app.post('/user/view/visitor', async function(req, res){
     } catch(err) {
       res.send("Error!");
     }
-});
+})
 
-async function visitor(idNumber, role) {
-  try {
-      await client.connect();
-      let exist;
 
-      if (role === "Owner" || role === "Admin" || role === "Security") {
-          exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
-      } else {
-          exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: id });
-      }
-
-      return exist;
-  } catch (error) {
-      // Handle errors appropriately
-      console.error("An error occurred:", error.message);
-      return null; // Return null or another suitable value to indicate an error
-  }
-}
 /**
  * @swagger
  * /changePassNumber:
@@ -712,39 +695,18 @@ async function registerOwner(newrole, newname, newidNumber, newemail, newpasswor
     console.log("Owner registered sucessfully")
   }
 }
-
-//CREATE(checkin Visitor)
-async function checkinVisitor(newrole, newname, newidNumber, newdocumentType, newgender, newbirthDate, 
-                        newage, newdocumentExpiry, newcompany, newTelephoneNumber, newvehicleNumber,
-                        newcategory, newethnicity, newphotoAttributes, newpassNumber){
-  //TODO: Check if username exist
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: newname})
-  if(exist){
-        console.log("Visitor has already checked in")
-  }else{
-      await createListing2(client,
-        {
-          role: newrole,
-          name: newname,
-          idNumber: newidNumber,
-          documentType: newdocumentType,
-          gender: newgender,
-          birthDate:newbirthDate,
-          age: newage,
-          documentExpiry: newdocumentExpiry,
-          company: newcompany,
-          TelephoneNumber: newTelephoneNumber,
-          vehicleNumber: newvehicleNumber,
-          category: newcategory,
-          ethnicity: newethnicity,
-          photoAttributes: newphotoAttributes,
-          passNumber: newpassNumber 
-        }
-      );
-      console.log("Checked in successfully!")
+//view visitor
+async function visitor(idNumber, role) {
+  var exist;
+  await client.connect();
+  if(role == "Host" || role == "security"){
+    exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
   }
-} 
+  else if(role == "visitor"){
+    exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
+  }
+  return exist;
+}
 
 //UPDATE(change pass number)
 async function changePassNumber(savedidNumber, newpassNumber){
