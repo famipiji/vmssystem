@@ -509,6 +509,40 @@ app.post('/changePassNumber', async function (req, res) {
   });
 });
 
+//delete visitor
+/**
+ * @swagger
+ * /deleteVisitor:
+ *   post:
+ *     summary: Delete a visitor
+ *     description: Delete a visitor by name and ID number
+ *     tags: [Host]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               idNumber:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Visitor deleted successfully
+ *       '401':
+ *         description: Unauthorized - Invalid or missing token
+ *       '500':
+ *         description: Internal Server Error
+ */
+app.post('/deleteVisitor', async function (req, res){
+  const {name, idNumber} = req.body
+  await deleteVisitor(name, idNumber)
+  res.send(req.body)
+})
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
