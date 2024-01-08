@@ -283,16 +283,33 @@ app.post('/registerHost', async function (req, res){
  *       name: "Authorization"
  *       in: "header"
  */
-app.post('/viewVisitor', async function(req, res){
-  var token = req.header('Authorization').split(" ")[1];
+app.post('/viewVisitor', async function(req, res) {
   try {
-      var decoded = jwt.verify(token, privatekey);
-      console.log(decoded.role);
-      res.send(await viewVisitor(decoded.idNumber, decoded.role));
-    } catch(err) {
-      res.send("Error!");
+    const token = req.header('Authorization').split(" ")[1];
+    const decodedToken = jwt.verify(token, privatekey);
+
+    // Validate token and role
+    if (decodedToken && decodedToken.role === "Host" || decodedToken.role === "security") {
+      const { idNumber } = decodedToken;
+
+      // Validate that idNumber is present in the decoded token
+      if (!idNumber) {
+        console.log("Invalid token: 'idNumber' is missing");
+        return res.status(401).send("Unauthorized");
+      }
+
+      const visitorData = await viewVisitor(idNumber, decodedToken.role);
+      res.status(200).send(visitorData);
+    } else {
+      console.log("Access Denied!");
+      res.status(403).send("Access Denied");
     }
+  } catch (err) {
+    console.error("Error decoding token:", err.message);
+    res.status(401).send("Unauthorized");
+  }
 });
+
 
 //View Host
 /**
