@@ -389,34 +389,45 @@ app.post('/viewHost', async function(req, res){
  *       '403':
  *         description: Forbidden - User does not have access to register a visitor
  */
-app.post('/createpassVisitor', async function(req, res){
-  var token = req.header('Authorization').split(" ")[1];
-  let decoded;
-
+app.post('/createpassVisitor', async function(req, res) {
   try {
-      decoded = jwt.verify(token, privatekey);
-      console.log(decoded.role);
-  } catch(err) {
-      console.log("Error decoding token:", err.message);
-      return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
-  }
+    const token = req.header('Authorization').split(" ")[1];
+    const decoded = jwt.verify(token, privatekey);
 
-  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
+    // Validate token and role
+    if (decoded && (decoded.role === "Host" || decoded.role === "security")) {
       const {
-          role, name, idNumber, documentType, gender, birthDate, age, 
-          documentExpiry, company, TelephoneNumber, vehicleNumber, 
-          category, ethnicity, photoAttributes, passNumber, password
+        role: newRole, name, idNumber, documentType, gender, birthDate,
+        age, documentExpiry, company, telephoneNumber, vehicleNumber,
+        category, ethnicity, photoAttributes, passNumber, password
       } = req.body;
 
-      await createpassVisitor(role, name, idNumber, documentType, gender, birthDate, 
-                              age, documentExpiry, company, TelephoneNumber, 
-                              vehicleNumber, category, ethnicity, photoAttributes, 
-                              passNumber, password);
-  } else {
+      // Validate that all required fields are present in the request body
+      if (!newRole || !name || !idNumber || !documentType || !gender || !birthDate ||
+          !age || !documentExpiry || !company || !telephoneNumber || !vehicleNumber ||
+          !category || !ethnicity || !photoAttributes || !passNumber || !password) {
+        console.log("Invalid request: Missing required fields");
+        return res.status(400).send("Invalid request: Missing required fields");
+      }
+
+      await createpassVisitor(
+        newRole, name, idNumber, documentType, gender, birthDate,
+        age, documentExpiry, company, telephoneNumber,
+        vehicleNumber, category, ethnicity, photoAttributes,
+        passNumber, password
+      );
+
+      res.status(200).send("Visitor registered successfully");
+    } else {
       console.log("Access Denied!");
-      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
+      res.status(403).send("Access Denied");
+    }
+  } catch (err) {
+    console.error("Error decoding token:", err.message);
+    res.status(401).send("Unauthorized");
   }
 });
+
 
 
 
