@@ -230,28 +230,31 @@ app.post( '/loginAdmin',async function (req, res) {
  *       '403':
  *         description: Forbidden - User does not have access to register an Host
  */
-app.post('/registerHost', async function (req, res){
-  let header = req.headers.authorization;
-  let token = header.split(' ')[1];
-  jwt.verify(token, privatekey, async function(err, decoded) {
-    console.log(decoded)
-    if (await decoded.role == "security"){
-      const data = req.body
-      res.send(
-        registerHost(
-          data.role,
-          data.name,
-          data.idNumber,
-          data.email,
-          data.password,
-          data.phoneNumber
-        )
-      )
-    }else{
-      console.log("You have no access to register an Host!")
+app.post('/registerHost', async function (req, res) {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const decoded = jwt.verify(token, privatekey);
+
+    // Validate token and role
+    if (decoded.role === "security") {
+      const { role, name, idNumber, email, password, phoneNumber } = req.body;
+      const registrationResult = await registerHost(role, name, idNumber, email, password, phoneNumber);
+      
+      if (registrationResult.success) {
+        res.status(200).send({ message: "Host registered successfully" });
+      } else {
+        res.status(400).send({ message: "Failed to register Host" });
+      }
+    } else {
+      console.log("You have no access to register a Host!");
+      res.status(403).send("Access Denied");
     }
-})
-})
+  } catch (error) {
+    console.error("Error decoding token:", error.message);
+    res.status(401).send("Unauthorized");
+  }
+});
+
 
 
 
