@@ -526,34 +526,39 @@ app.post('/deleteVisitor', async function (req, res){
  *       '500':
  *         description: Internal server error occurred.
  */
-app.post('/retrievePhoneNumber', async function (req, res){
-  var token = req.header('Authorization').split(" ")[1];
-  let decoded;
-
+app.post('/retrievePhoneNumber', async function (req, res) {
   try {
-    decoded = jwt.verify(token, privatekey);
-  } catch(err) {
-    console.log("Error decoding token:", err.message);
-    return res.status(401).send("Unauthorized");
-  }
+    const token = req.header('Authorization').split(" ")[1];
+    const decoded = jwt.verify(token, privatekey);
 
-  if (decoded && (decoded.role === "security")){
-    const { idNumber } = req.body;
+    if (decoded.role === "security") {
+      const { idNumber } = req.body;
 
-    try {
-      const phoneNumberResponse = await retrievePhoneNumber(idNumber);
-      // Send the phone number in the response body
-      res.status(200).send(phoneNumberResponse);
-    } catch (error) {
-      // Handle errors such as visitor not found
-      console.log(error.message);
-      res.status(404).send(error.message);
+      // Validate that idNumber is present in the request body
+      if (!idNumber) {
+        console.log("Invalid request: 'idNumber' is missing");
+        return res.status(400).send("Invalid request: 'idNumber' is missing");
+      }
+
+      try {
+        const phoneNumber = await retrievePhoneNumber(idNumber);
+        // Send the phone number in the response body
+        res.status(200).send({ phoneNumber });
+      } catch (error) {
+        // Handle errors such as visitor not found
+        console.error("Error retrieving phone number:", error.message);
+        res.status(404).send(`Visitor with ID number '${idNumber}' not found`);
+      }
+    } else {
+      console.log("Access Denied!");
+      res.status(403).send("Access Denied");
     }
-  } else {
-    console.log("Access Denied!");
-    res.status(403).send("Access Denied");
+  } catch (err) {
+    console.error("Error decoding token:", err.message);
+    res.status(401).send("Unauthorized");
   }
 });
+
 
 
 app.listen(port, () => {
