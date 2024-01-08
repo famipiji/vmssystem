@@ -825,4 +825,4 @@ function verifyToken(req, res, next) {
     res.user = decoded;
     next();
   });
-}
+};
