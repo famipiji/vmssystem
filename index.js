@@ -236,7 +236,7 @@ app.post('/registerHost', async function (req, res) {
     const decoded = jwt.verify(token, privatekey);
 
     // Validate token and role
-    if (decoded.role === "security") {
+    if (decoded.role == "security") {
       const { role, name, idNumber, email, password, phoneNumber } = req.body;
       const registrationResult = await registerHost(role, name, idNumber, email, password, phoneNumber);
       
@@ -286,33 +286,16 @@ app.post('/registerHost', async function (req, res) {
  *       name: "Authorization"
  *       in: "header"
  */
-app.post('/viewVisitor', async function(req, res) {
+app.post('/viewVisitor', async function(req, res){
+  var token = req.header('Authorization').split(" ")[1];
   try {
-    const token = req.header('Authorization').split(" ")[1];
-    const decodedToken = jwt.verify(token, privatekey);
-
-    // Validate token and role
-    if (decodedToken && decodedToken.role === "Host" || decodedToken.role === "security") {
-      const { idNumber } = decodedToken;
-
-      // Validate that idNumber is present in the decoded token
-      if (!idNumber) {
-        console.log("Invalid token: 'idNumber' is missing");
-        return res.status(401).send("Unauthorized");
-      }
-
-      const visitorData = await viewVisitor(idNumber, decodedToken.role);
-      res.status(200).send(visitorData);
-    } else {
-      console.log("Access Denied!");
-      res.status(403).send("Access Denied");
+      var decoded = jwt.verify(token, privatekey);
+      console.log(decoded.role);
+      res.send(await viewVisitor(decoded.idNumber, decoded.role));
+    } catch(err) {
+      res.send("Error!");
     }
-  } catch (err) {
-    console.error("Error decoding token:", err.message);
-    res.status(401).send("Unauthorized");
-  }
 });
-
 
 //View Host
 /**
