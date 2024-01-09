@@ -159,6 +159,72 @@ app.post( '/loginAdmin',async function (req, res) {
   await loginAdmin(res, idNumber, hashed)
 })
 
+// Manage User Role
+/**
+ * @swagger
+ * /manageRole:
+ *   post:
+ *     summary: Manage user role
+ *     description: Manage the role of a user by updating the role associated with the provided ID number (accessible to administrators).
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Role managed successfully.
+ *         schema:
+ *           type: object
+ *           properties:
+ *             message:
+ *               type: string
+ *               example: Role managed successfully!
+ *       '401':
+ *         description: Unauthorized - Invalid or missing token.
+ *       '403':
+ *         description: Forbidden - User does not have the necessary permissions.
+ *       '404':
+ *         description: Username with the provided ID number does not exist in the database.
+ *       '500':
+ *         description: Internal server error occurred.
+ */
+app.post('/manageRole', async function (req, res){
+  var token = req.header('Authorization').split(" ")[1];
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, privatekey);
+  } catch(err) {
+    console.log("Error decoding token:", err.message);
+    return res.status(401).send("Unauthorized");
+  }
+
+  if (decoded && (decoded.role === "admin")){
+    const { idNumber, role } = req.body;
+
+    try {
+      await manageRole(idNumber, role);
+      res.status(200).send("Role managed successfully!");
+    } catch (error) {
+      console.log(error.message);
+      res.status(404).send(error.message);
+    }
+  } else {
+    console.log("Access Denied!");
+    res.status(403).send("Access Denied");
+  }
+});
+
 
 //retrieve Visitor info
 /**
@@ -739,6 +805,17 @@ async function loginAdmin(res,idNumber, hashed){
     }
 }
 
+//manageRole
+async function manageRole(idNumber, role){
+  await client.connect()
+  const exist = await client.db("assignmentCondo").collection("owner").findOne({idNumber: idNumber})
+  if(exist){
+    await client.db("assignmentCondo").collection("owner").updateOne({idNumber: idNumber}, {$set: {role: role}})
+    console.log("Role managed successfully!")
+  }else{
+    console.log("Username not exist!")
+  }
+}
 
 
 //CREATE(register Host)
