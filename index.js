@@ -46,41 +46,7 @@ var checkpassword;
 
 app.use(express.json());
 
-//retrieve Visitor info
-/**
- * @swagger
- * /retrieveVisitor:
- *   post:
- *     summary: Authenticate visitor
- *     description: Login with identification number and password for a visitor to view pass
- *     tags: [Visitor]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
- */
-app.post('/retrieveVisitor', async function(req, res){
-  const {idNumber, password} = req.body;
-  retrieveVisitor(res, idNumber , password);
-});
+
 
 //login as Host
 /**
@@ -193,6 +159,42 @@ app.post( '/loginAdmin',async function (req, res) {
   await loginAdmin(res, idNumber, hashed)
 })
 
+//retrieve Visitor info
+/**
+ * @swagger
+ * /retrieveVisitor:
+ *   post:
+ *     summary: Authenticate visitor
+ *     description: Login with identification number and password for a visitor to view pass
+ *     tags: [Visitor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Login successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
+ */
+app.post('/retrieveVisitor', async function(req, res){
+  const {idNumber, password} = req.body;
+  retrieveVisitor(res, idNumber , password);
+});
+
 //register Host
 /**
  * @swagger
@@ -200,7 +202,7 @@ app.post( '/loginAdmin',async function (req, res) {
  *   post:
  *     summary: Register an Host
  *     description: Register a new Host with security role
- *     tags: [Register]
+ *     tags: [Security]
  *     requestBody:
  *       required: true
  *       content:
