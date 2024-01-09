@@ -258,13 +258,12 @@ app.post('/registerHost', async function (req, res) {
 
         res.send(result);
       } else {
-        console.log("Only users with the 'security' role can register a Host!");
-        res.status(403).send("Forbidden");
+        res.status(403).send("Only users with the 'security' role can register a Host!");
       }
     });
   } catch (error) {
     console.error("Error during registration:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send("Authorization required!");
   }
 });
 
