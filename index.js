@@ -5,6 +5,11 @@ const port = process.env.PORT || 3000;
 app.use(express.json())
 var jwt = require('jsonwebtoken')
 
+//mongoDB
+const { MongoClient} = require("mongodb");
+const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
+const  client = new MongoClient(uri)
+
 //swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -29,11 +34,6 @@ const options = {
 };
 const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-//mongoDB
-const { MongoClient} = require("mongodb");
-const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
-const  client = new MongoClient(uri)
 
 //bcrypt
 const bcrypt = require('bcrypt');
@@ -89,7 +89,7 @@ app.post('/retrieveVisitor', async function(req, res){
  *   post:
  *     summary: Authenticate Host
  *     description: Login with identification number and password
- *     tags: [Host]
+ *     tags: [Login]
  *     requestBody:
  *       required: true
  *       content:
@@ -126,7 +126,7 @@ app.post( '/loginHost',async function (req, res) {
  *   post:
  *     summary: Authenticate security personnel
  *     description: Login with identification number and password
- *     tags: [Security]
+ *     tags: [Login]
  *     requestBody:
  *       required: true
  *       content:
@@ -185,7 +185,7 @@ app.post( '/loginSecurity',async function (req, res) {
  *         description: Invalid request body
  *       '401':
  *         description: Unauthorized - Invalid credentials
- *     tags: [Admin]
+ *     tags: [Login]
  */
 app.post( '/loginAdmin',async function (req, res) {
   let {idNumber, password} = req.body
