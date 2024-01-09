@@ -166,7 +166,7 @@ app.post( '/loginAdmin',async function (req, res) {
  *   post:
  *     summary: Manage user role
  *     description: Manage the role of a user by updating the role associated with the provided ID number (accessible to administrators).
- *     tags: [Admin]
+ *     tags: [Security & Host]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -481,6 +481,8 @@ app.post('/viewHost', async function(req, res) {
  *                 type: string
  *               password:
  *                type: string
+ *               hostnumber:
+ *                 type: string
  *     responses:
  *       '200':
  *         description: Visitor registered successfully
@@ -489,34 +491,53 @@ app.post('/viewHost', async function(req, res) {
  *       '403':
  *         description: Forbidden - User does not have access to register a visitor
  */
-app.post('/createpassVisitor', async function(req, res){
+app.post('/createpassVisitor', async function(req, res) {
   var token = req.header('Authorization').split(" ")[1];
   let decoded;
 
   try {
-      decoded = jwt.verify(token, privatekey);
+    decoded = jwt.verify(token, privatekey);
+    await client.connect();
+    const hostidnumber = decoded.idNumber;
+    const host = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: hostidnumber });
+    
+    if (host) {
+      const hostnumber = host.phoneNumber;
       console.log(decoded.role);
-  } catch(err) {
-      console.log("Error decoding token:", err.message);
-      return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
-  }
+      
+      if (decoded.role === "Host" || decoded.role === "security") {
+        const {
+          role, name, idNumber, documentType, gender, birthDate,
+          age, documentExpiry, company, TelephoneNumber,
+          vehicleNumber, category, ethnicity, photoAttributes,
+          passNumber, password
+        } = req.body;
 
-  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
-      const {
-          role, name, idNumber, documentType, gender, birthDate, age, 
-          documentExpiry, company, TelephoneNumber, vehicleNumber, 
-          category, ethnicity, photoAttributes, passNumber, password
-      } = req.body;
+        // Pass the hostnumber to createpassVisitor function
+        await createpassVisitor(
+          role, name, idNumber, documentType, gender, birthDate,
+          age, documentExpiry, company, TelephoneNumber,
+          vehicleNumber, category, ethnicity, photoAttributes,
+          passNumber, password, hostnumber
+        );
 
-      await createpassVisitor(role, name, idNumber, documentType, gender, birthDate, 
-                              age, documentExpiry, company, TelephoneNumber, 
-                              vehicleNumber, category, ethnicity, photoAttributes, 
-                              passNumber, password);
-  } else {
-      console.log("Access Denied!");
-      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
+        res.send("Pass visitor created successfully");
+      } else {
+        console.log("Access Denied!");
+        res.status(403).send("Access Denied"); // Send a 403 Forbidden response
+      }
+    } else {
+      console.log("Host not found!");
+      res.status(404).send("Host not found");
+    }
+  } catch (err) {
+    console.log("Error decoding token:", err.message);
+    res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
+  } finally {
+    await client.close();
   }
 });
+
 
 
 
