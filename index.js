@@ -232,28 +232,42 @@ app.post('/retrieveVisitor', async function(req, res){
  *       '403':
  *         description: Forbidden - User does not have access to register an Host
  */
-app.post('/registerHost', async function (req, res){
-  let header = req.headers.authorization;
-  let token = header.split(' ')[1];
-  jwt.verify(token, privatekey, async function(err, decoded) {
-    console.log(decoded)
-    if (await decoded.role == "security"){
-      const data = req.body
-      res.send(
-        registerHost(
+app.post('/registerHost', async function (req, res) {
+  try {
+    let header = req.headers.authorization;
+    let token = header.split(' ')[1];
+    
+    jwt.verify(token, privatekey, async function(err, decoded) {
+      if (err) {
+        console.log("Token verification failed:", err);
+        return res.status(401).send("Unauthorized");
+      }
+
+      console.log(decoded);
+
+      if (decoded.role === "security") {
+        const data = req.body;
+        const result = await registerHost(
           data.role,
           data.name,
           data.idNumber,
           data.email,
           data.password,
           data.phoneNumber
-        )
-      )
-    }else{
-      console.log("You have no access to register an Host!")
-    }
-})
-})
+        );
+
+        res.send(result);
+      } else {
+        console.log("Only users with the 'security' role can register a Host!");
+        res.status(403).send("Forbidden");
+      }
+    });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 
 
 
