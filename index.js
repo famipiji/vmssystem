@@ -827,10 +827,6 @@ async function loginAdmin(res,idNumber, hashed){
 }
 
 //manageRoles
-const { MongoClient } = require('mongodb');
-const uri = 'your-mongodb-uri';
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
 async function manageRoles(res, idNumber, role) {
   try {
     // Connect to MongoDB
