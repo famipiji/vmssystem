@@ -881,13 +881,6 @@ async function manageRoles(res, idNumber, role) {
   }
 }
 
-// Example usage:
-app.post('/manageRoles', async function (req, res) {
-  const { idNumber, role } = req.body;
-  await manageRoles(res, idNumber, role);
-});
-
-
 //CREATE(register Host)
 async function registerHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber){
   await client.connect()
