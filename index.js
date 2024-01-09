@@ -200,7 +200,7 @@ app.post( '/loginAdmin',async function (req, res) {
  *   post:
  *     summary: Register an Host
  *     description: Register a new Host with security role
- *     tags: [Host]
+ *     tags: [Register]
  *     requestBody:
  *       required: true
  *       content:
@@ -264,7 +264,7 @@ app.post('/registerHost', async function (req, res){
  *     summary: "View visitors"
  *     description: "Retrieve visitors based on user role"
  *     tags:
- *       - Host & Security
+ *       - Visitor
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -302,7 +302,7 @@ app.post('/viewVisitor', async function(req, res){
  *   post:
  *     summary: "View hosts"
  *     description: "Retrieve hosts based on user role"
- *     tags: [Admin]
+ *     tags: [Security]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -357,7 +357,7 @@ app.post('/viewHost', async function(req, res) {
  *   post:
  *     summary: Create a visitor pass
  *     description: Create a new visitor pass (accessible to Hosts and security personnel)
- *     tags: [Host, Security]
+ *     tags: [Security]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -445,7 +445,7 @@ app.post('/createpassVisitor', async function(req, res){
  *   post:
  *     summary: Change pass number
  *     description: Change pass number for a user
- *     tags: [Host, Security]
+ *     tags: [Security]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -480,7 +480,7 @@ app.post('/changePassNumber', async function (req, res){
  *   post:
  *     summary: Delete a visitor
  *     description: Delete a visitor by name and ID number
- *     tags: [Host]
+ *     tags: [Visitor]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
