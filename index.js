@@ -202,7 +202,7 @@ app.post('/retrieveVisitor', async function(req, res){
  *   post:
  *     summary: Register an Host
  *     description: Register a new Host with security role
- *     tags: [Security]
+ *     tags: [Security & Host]
  *     requestBody:
  *       required: true
  *       content:
@@ -266,7 +266,7 @@ app.post('/registerHost', async function (req, res){
  *     summary: "View visitors"
  *     description: "Retrieve visitors based on user role"
  *     tags:
- *       - Visitor
+ *       - Security & Host
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -304,7 +304,7 @@ app.post('/viewVisitor', async function(req, res){
  *   post:
  *     summary: "View hosts"
  *     description: "Retrieve hosts based on user role"
- *     tags: [Security]
+ *     tags: [Security & Host]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -359,7 +359,7 @@ app.post('/viewHost', async function(req, res) {
  *   post:
  *     summary: Create a visitor pass
  *     description: Create a new visitor pass (accessible to Hosts and security personnel)
- *     tags: [Security]
+ *     tags: [Security & Host]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -447,7 +447,7 @@ app.post('/createpassVisitor', async function(req, res){
  *   post:
  *     summary: Change pass number
  *     description: Change pass number for a user
- *     tags: [Security]
+ *     tags: [Security & Host]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -517,7 +517,7 @@ app.post('/deleteVisitor', async function (req, res){
  *   post:
  *     summary: Retrieve host phone number
  *     description: Retrieve the phone number of a host based on the provided ID number (accessible to security personnel).
- *     tags: [Security]
+ *     tags: [Security & Host]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
