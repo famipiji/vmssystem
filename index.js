@@ -159,6 +159,94 @@ app.post( '/loginAdmin',async function (req, res) {
   await loginAdmin(res, idNumber, hashed)
 })
 
+/**
+ * @swagger
+ * /manageRoles:
+ *   post:
+ *     summary: Manage user roles by an authenticated administrator
+ *     description: |
+ *       This endpoint allows an authenticated administrator to manage user roles.
+ *       Only administrators with the 'admin' role are authorized to use this endpoint.
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *                 description: The identification number of the user whose role needs to be managed.
+ *               role:
+ *                 type: string
+ *                 description: The new role to be assigned to the user.
+ *     responses:
+ *       '200':
+ *         description: Roles managed successfully
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Only administrators can manage roles
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Unauthorized
+ *       '403':
+ *         description: Forbidden - User does not have the 'admin' role
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Forbidden
+ *       '500':
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Internal Server Error
+ */
+app.post('/manageRoles', async function (req, res) {
+  try {
+    let header = req.headers.authorization;
+    let token = header.split(' ')[1];
+    
+    jwt.verify(token, privatekey, async function(err, decoded) {
+      if (err) {
+        console.log("Token verification failed:", err);
+        return res.status(401).send("Unauthorized");
+      }
+
+      console.log(decoded);
+
+      if (decoded.role === "admin") {
+        // Assuming your request body has information to manage roles
+        const { idNumber, role } = req.body;
+
+        // Perform actions based on the request, for example, updating user roles
+        const result = await manageRoles(idNumber, role);
+
+        res.send(result);
+      } else {
+        console.log("Only administrators can manage roles!");
+        res.status(403).send("Forbidden");
+      }
+    });
+  } catch (error) {
+    console.error("Error during role management:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
 //retrieve Visitor info
 /**
  * @swagger
@@ -737,6 +825,72 @@ async function loginAdmin(res,idNumber, hashed){
         console.log("Username not exist!");
     }
 }
+
+//manageRoles
+const { MongoClient } = require('mongodb');
+const uri = 'your-mongodb-uri';
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+async function manageRoles(res, idNumber, role) {
+  try {
+    // Connect to MongoDB
+    await client.connect();
+
+    // Check if the user exists in the "owner" collection
+    let exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
+
+    if (exist) {
+      // Update the user's role in the "owner" collection
+      await client.db("assignmentCondo").collection("owner").updateOne(
+        { idNumber: idNumber },
+        { $set: { role: role } }
+      );
+
+      res.send({
+        message: `Roles for user with idNumber ${idNumber} managed successfully. New role: ${role}`,
+        success: true
+      });
+      return;
+    }
+
+    // If not found in "owner" collection, check in the "security" collection
+    exist = await client.db("assignmentCondo").collection("security").findOne({ idNumber: idNumber });
+
+    if (exist) {
+      // Update the user's role in the "security" collection
+      await client.db("assignmentCondo").collection("security").updateOne(
+        { idNumber: idNumber },
+        { $set: { role: role } }
+      );
+
+      res.send({
+        message: `Roles for security with idNumber ${idNumber} managed successfully. New role: ${role}`,
+        success: true
+      });
+    } else {
+      res.status(404).send({
+        message: `User with idNumber ${idNumber} not found`,
+        success: false
+      });
+    }
+  } catch (error) {
+    console.error("Error during role management:", error);
+    res.status(500).send({
+      message: "Internal Server Error",
+      success: false
+    });
+  } finally {
+    // Close the MongoDB connection
+    await client.close();
+  }
+}
+
+// Example usage:
+app.post('/manageRoles', async function (req, res) {
+  const { idNumber, role } = req.body;
+  await manageRoles(res, idNumber, role);
+});
+
 
 //CREATE(register Host)
 async function registerHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber){
