@@ -5,6 +5,11 @@ const port = process.env.PORT || 3000;
 app.use(express.json())
 var jwt = require('jsonwebtoken')
 
+//mongoDB
+const { MongoClient} = require("mongodb");
+const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
+const  client = new MongoClient(uri)
+
 //swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -30,10 +35,7 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//mongoDB
-const { MongoClient} = require("mongodb");
-const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
-const  client = new MongoClient(uri)
+
 
 //bcrypt
 const bcrypt = require('bcrypt');
