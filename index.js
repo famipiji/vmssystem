@@ -231,12 +231,11 @@ app.post('/loginSecurity', async (req, res) => {
   *                   type: string
   *                   example: An error occurred.
  */
-app.post('/loginAdmin', async (req, res) => {
-  const { idNumber, password } = req.body;
+app.post('/loginAdmin', async function (req, res) {
+  let { idNumber, password } = req.body;
   const hashed = await generateHash(password);
   await loginAdmin(res, idNumber, hashed);
 });
-
 
 //retrieve Visitor info
 /**
