@@ -450,7 +450,7 @@ app.post('/registertestHost', async function (req, res) {
  *     summary: View visitor details based on the host's ID
  *     description: Retrieve visitor details based on the host's ID number. This endpoint is restricted to hosts.
  *     tags:
- *       - Host & Security
+ *       - Visitor
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -496,7 +496,7 @@ app.post('/viewVisitor', async function(req, res) {
  *   post:
  *     summary: "View hosts"
  *     description: "Retrieve hosts based on user role"
- *     tags: [Admin]
+ *     tags: [Host]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -543,7 +543,7 @@ app.post('/viewHost', async function(req, res){
  *     summary: Create a visitor pass
  *     description: Create a new visitor pass (accessible to Hosts and security personnel)
  *     tags:
- *       - Host & Security 
+ *       - Visitor
  *     security:
  *       - bearerAuth: []
  *     requestBody:
