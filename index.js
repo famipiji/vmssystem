@@ -57,7 +57,7 @@ app.use(express.json());
  *     summary: Login as Host
  *     description: Authenticate and login as a host using the provided ID number and password.
  *     tags:
- *       - Host
+ *       - Login
  *     requestBody:
  *       required: true
  *       content:
@@ -118,7 +118,7 @@ app.post( '/loginHost',async function (req, res) {
  *     summary: Login as Security
  *     description: Authenticate and login as a security personnel.
  *     tags:
- *       - Security
+ *       - Login
  *     requestBody:
  *       required: true
  *       content:
@@ -160,7 +160,7 @@ app.post('/loginSecurity', async function (req, res) {
 *   post:
   *     summary: Admin Login
   *     description: Authenticate as an administrator and receive a JWT token.
-  *     tags: [Admin]
+  *     tags: [Login]
   *     requestBody:
   *       required: true
   *       content:
