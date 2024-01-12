@@ -43,7 +43,7 @@ const saltRounds = 10;
 var hashed;
 //token
 var token;
-const privatekey = "PRXWGaming";
+const privatekey = "@zure_Ray";
 var checkpassword;
 
 app.use(express.json());
