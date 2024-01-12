@@ -5,11 +5,6 @@ const port = process.env.PORT || 3000;
 app.use(express.json())
 var jwt = require('jsonwebtoken')
 
-//mongoDB
-const { MongoClient} = require("mongodb");
-const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
-const  client = new MongoClient(uri)
-
 //swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -35,6 +30,11 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+//mongoDB
+const { MongoClient} = require("mongodb");
+const uri = "mongodb+srv://fakhrul:1235@clusterfakhrul.bigkwnk.mongodb.net/?retryWrites=true&w=majority"
+const  client = new MongoClient(uri)
+
 //bcrypt
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -46,16 +46,15 @@ var checkpassword;
 
 app.use(express.json());
 
-
-
-//login as Host
+//retrieve Visitor info
 /**
  * @swagger
- * /loginHost:
+ * /retrieveVisitor:
  *   post:
- *     summary: Authenticate Host
- *     description: Login with identification number and password
- *     tags: [Login]
+ *     summary: "Retrieve visitor information"
+ *     description: "Retrieve visitor information based on the provided idNumber."
+ *     tags:
+ *       - Visitor
  *     requestBody:
  *       required: true
  *       content:
@@ -65,19 +64,89 @@ app.use(express.json());
  *             properties:
  *               idNumber:
  *                 type: string
- *               password:
- *                 type: string
+ *                 description: "The unique ID number of the visitor."
+ *             required:
+ *               - idNumber
  *     responses:
  *       '200':
- *         description: Login successful
+ *         description: "Successfully retrieved visitor information."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Token:
+ *                   type: string
+ *                   description: "JWT token for authentication."
+ *                 Visitor Info:
+ *                   type: object
+ *                   description: "Details of the visitor."
+ *       '404':
+ *         description: "Visitor not found."
+ *       '500':
+ *         description: "Internal Server Error."
+ *     security:
+ *       - bearerAuth: []
+ */
+app.post('/retrieveVisitor', async function(req, res) {
+  const { idNumber } = req.body;
+  retrieveVisitor(res, idNumber); // Only pass idNumber to the function
+});
+
+//login as Host
+/**
+ * @swagger
+ * /loginHost:
+ *   post:
+ *     summary: Login as Host
+ *     description: Authenticate and login as a host using the provided ID number and password.
+ *     tags:
+ *       - Host
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *                 description: The unique ID number of the host.
+ *               password:
+ *                 type: string
+ *                 description: The password of the host.
+ *     responses:
+ *       '200':
+ *         description: Successfully authenticated and logged in as a host.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Token:
+ *                   type: string
+ *                   description: JWT token for the authenticated host.
+ *       '401':
+ *         description: Unauthorized - Incorrect password provided.
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
+ *               example: "Wrong password!"
+ *       '404':
+ *         description: Not Found - Host with the provided ID number does not exist.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Username not exist!"
+ *       '500':
+ *         description: Internal Server Error - Failed to authenticate due to server error.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Internal Server Error!"
  */
 app.post( '/loginHost',async function (req, res) {
   let {idNumber, password} = req.body;
@@ -90,9 +159,10 @@ app.post( '/loginHost',async function (req, res) {
  * @swagger
  * /loginSecurity:
  *   post:
- *     summary: Authenticate security personnel
- *     description: Login with identification number and password
- *     tags: [Login]
+ *     summary: Login as Security
+ *     description: Authenticate and login as a security personnel.
+ *     tags:
+ *       - Security
  *     requestBody:
  *       required: true
  *       content:
@@ -102,71 +172,123 @@ app.post( '/loginHost',async function (req, res) {
  *             properties:
  *               idNumber:
  *                 type: string
+ *                 description: The unique ID number of the security personnel.
  *               password:
  *                 type: string
+ *                 description: The password associated with the security personnel's account.
  *     responses:
  *       '200':
- *         description: Login successful
+ *         description: Successfully authenticated. Returns a JWT token.
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *       '400':
- *         description: Invalid request body
+ *               example: "Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZEN..."
  *       '401':
- *         description: Unauthorized - Invalid credentials
+ *         description: Unauthorized - Incorrect password.
+ *       '404':
+ *         description: Not Found - Security personnel with the provided ID number does not exist.
+ *       '500':
+ *         description: Internal Server Error - Failed to authenticate due to server error.
  */
-app.post( '/loginSecurity',async function (req, res) {
-  let {idNumber, password} = req.body
+app.post('/loginSecurity', async function (req, res) {
+  let { idNumber, password } = req.body;
   const hashed = await generateHash(password);
-  await loginSecurity(res, idNumber, hashed)
-})
+  await loginSecurity(res, idNumber, hashed);
+});
 
 //login as Admin
 /**
  * @swagger
- * /loginAdmin:
- *   post:
- *     summary: Authenticate administrator personnel
- *     description: Login with identification number and password
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
- *     tags: [Login]
+* /loginAdmin:
+*   post:
+  *     summary: Admin Login
+  *     description: Authenticate as an administrator and receive a JWT token.
+  *     tags: [Admin]
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               idNumber:
+  *                 type: string
+  *               password:
+  *                 type: string
+  *     responses:
+  *       '200':
+  *         description: Login successful.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: true
+  *                 message:
+  *                   type: string
+  *                   example: Login Success!
+  *                 token:
+  *                   type: string
+  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  *       '401':
+  *         description: Unauthorized - Wrong password.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: Wrong password!
+  *       '404':
+  *         description: Not Found - Username not exist.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: Username not exist!
+  *       '500':
+  *         description: Internal server error occurred.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: An error occurred.
  */
-app.post( '/loginAdmin',async function (req, res) {
-  let {idNumber, password} = req.body
+app.post('/loginAdmin', async function (req, res) {
+  let { idNumber, password } = req.body;
   const hashed = await generateHash(password);
-  await loginAdmin(res, idNumber, hashed)
-})
+  await loginAdmin(res, idNumber, hashed);
+});
 
-// Manage User Role
+
+//register Host
 /**
  * @swagger
- * /manageRole:
+ * /registerHost:
  *   post:
- *     summary: Manage user role
- *     description: Manage the role of a user by updating the role associated with the provided ID number (accessible to administrators).
- *     tags: [Security & Host]
+ *     summary: Register a Host
+ *     description: Register a new host if the requester has security access.
+ *     tags:
+ *       - Security
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -176,100 +298,83 @@ app.post( '/loginAdmin',async function (req, res) {
  *           schema:
  *             type: object
  *             properties:
- *               idNumber:
- *                 type: string
  *               role:
  *                 type: string
- *     responses:
- *       '200':
- *         description: Role managed successfully.
- *         schema:
- *           type: object
- *           properties:
- *             message:
- *               type: string
- *               example: Role managed successfully!
- *       '401':
- *         description: Unauthorized - Invalid or missing token.
- *       '403':
- *         description: Forbidden - User does not have the necessary permissions.
- *       '404':
- *         description: Username with the provided ID number does not exist in the database.
- *       '500':
- *         description: Internal server error occurred.
- */
-app.post('/manageRole', async function (req, res){
-  var token = req.header('Authorization').split(" ")[1];
-  let decoded;
-
-  try {
-    decoded = jwt.verify(token, privatekey);
-  } catch(err) {
-    console.log("Error decoding token:", err.message);
-    return res.status(401).send("Unauthorized");
-  }
-
-  if (decoded && (decoded.role === "admin")){
-    const { idNumber, role } = req.body;
-
-    try {
-      await manageRole(idNumber, role);
-      res.status(200).send("Role managed successfully!");
-    } catch (error) {
-      console.log(error.message);
-      res.status(404).send(error.message);
-    }
-  } else {
-    console.log("Access Denied!");
-    res.status(403).send("Access Denied");
-  }
-});
-
-
-//retrieve Visitor info
-/**
- * @swagger
- * /retrieveVisitor:
- *   post:
- *     summary: Authenticate visitor
- *     description: Login with identification number and password for a visitor to view pass
- *     tags: [Visitor]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
+ *                 description: Role of the host.
+ *               name:
+ *                 type: string
+ *                 description: Name of the host.
  *               idNumber:
  *                 type: string
+ *                 description: ID number of the host.
+ *               email:
+ *                 type: string
+ *                 description: Email address of the host.
  *               password:
  *                 type: string
+ *                 description: Password of the host.
+ *               phoneNumber:
+ *                 type: string
+ *                 description: Phone number of the host.
  *     responses:
  *       '200':
- *         description: Login successful
+ *         description: Host registered successfully.
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
+ *               example: "Host registered successfully"
+ *       '403':
+ *         description: Forbidden - User does not have the necessary permissions.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "You have no access to register a Host!"
+ *       '409':
+ *         description: Conflict - Host with the provided ID number already exists.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Host has already registered"
+ *       '500':
+ *         description: Internal Server Error - Failed to register the host due to server error.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Internal Server Error!"
  */
-app.post('/retrieveVisitor', async function(req, res){
-  const {idNumber, password} = req.body;
-  retrieveVisitor(res, idNumber , password);
+app.post('/registerHost', async function (req, res) {
+  let header = req.headers.authorization;
+
+  // Check if Authorization header exists and contains a token
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).send("Unauthorized"); // Send unauthorized error in response
+  }
+
+  let token = header.split(' ')[1];
+  
+  jwt.verify(token, privatekey, async function(err, decoded) {
+    if (err) {
+      return res.status(401).send("Unauthorized"); // Send unauthorized error in response if JWT verification fails
+    }
+    
+    registerHost(decoded, req.body, res);
+  });
 });
 
-//register Host
+
+//register Host without security approval
 /**
  * @swagger
- * /registerHost:
+ * /registertestHost:
  *   post:
- *     summary: Register an Host
- *     description: Register a new Host with security role
- *     tags: [Security & Host]
+ *     summary: Register a test host
+ *     description: Endpoint to register a test host. Checks if the host with the provided ID number already exists and registers if not.
+ *     tags:
+ *       - Host & Security & Admin
  *     requestBody:
  *       required: true
  *       content:
@@ -289,92 +394,96 @@ app.post('/retrieveVisitor', async function(req, res){
  *                 type: string
  *               phoneNumber:
  *                 type: string
- *     security:
- *       - bearerAuth: []
  *     responses:
- *       '200':
- *         description: Host registered successfully
- *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '403':
- *         description: Forbidden - User does not have access to register an Host
+ *       200:
+ *         description: Host registered successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Host registered successfully
+ *       400:
+ *         description: Host with the provided ID number already exists.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Host has already registered
+ *       500:
+ *         description: Internal server error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error occurred.
  */
-app.post('/registerHost', async function (req, res) {
-  try {
-    let header = req.headers.authorization;
-    let token = header.split(' ')[1];
-    
-    jwt.verify(token, privatekey, async function(err, decoded) {
-      if (err) {
-        console.log("Token verification failed:", err);
-        return res.status(401).send("Unauthorized");
-      }
-
-      console.log(decoded);
-
-      if (decoded.role === "security") {
-        const data = req.body;
-        const result = await registerHost(
-          data.role,
-          data.name,
-          data.idNumber,
-          data.email,
-          data.password,
-          data.phoneNumber
-        );
-
-        res.send(result);
-      } else {
-        res.status(403).send("Only users with the 'security' role can register a Host!");
-      }
-    });
-  } catch (error) {
-    console.error("Error during registration:", error);
-    res.status(500).send("Authorization required!");
-  }
+app.post('/registertestHost', async function (req, res) {
+  const data = req.body;
+  await registertestHost(
+    data.role,
+    data.name,
+    data.idNumber,
+    data.email,
+    data.password,
+    data.phoneNumber,
+    res  // Pass the response object to the function
+  );
 });
-
-
-
-
 
 //View Visitor
 /**
  * @swagger
  * /viewVisitor:
  *   post:
- *     summary: "View visitors"
- *     description: "Retrieve visitors based on user role"
+ *     summary: View visitor details based on the host's ID
+ *     description: Retrieve visitor details based on the host's ID number. This endpoint is restricted to hosts.
  *     tags:
- *       - Security & Host
+ *       - Host & Security
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
  *     responses:
  *       '200':
- *         description: "Visitors retrieved successfully"
- *       '400':
- *         description: "Invalid token or error in retrieving visitors"
+ *         description: Successful retrieval of visitor details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
  *       '401':
- *         description: "Unauthorized - Invalid token or insufficient permissions"
- *     consumes:
- *       - "application/json"
- *     produces:
- *       - "application/json"
- *   securityDefinitions:
- *     JWT:
- *       type: "apiKey"
- *       name: "Authorization"
- *       in: "header"
+ *         description: Unauthorized - Invalid or expired token
+ *       '403':
+ *         description: Forbidden - Role does not have permission to access
+ *       '404':
+ *         description: Not Found - No visitors found for the specified host
+ *       '400':
+ *         description: Bad Request - Invalid role provided in the token
  */
-app.post('/viewVisitor', async function(req, res){
-  var token = req.header('Authorization').split(" ")[1];
+app.post('/viewVisitor', async function(req, res) {
+  const header = req.header('Authorization');
+  
+  // Check if Authorization header exists
+  if (!header || !header.startsWith("Bearer ")) {
+    return res.status(401).send("Invalid or no token"); // Send message if token is missing or malformed
+  }
+
+  const token = header.split(" ")[1];
+  
   try {
-      var decoded = jwt.verify(token, privatekey);
-      console.log(decoded.role);
-      res.send(await viewVisitor(decoded.idNumber, decoded.role));
-    } catch(err) {
-      res.send("Error!");
-    }
+    const decoded = jwt.verify(token, privatekey);
+    return await viewVisitor(decoded.idNumber, decoded.role, res);
+  } catch(err) {
+    return res.status(401).send("Unauthorized"); // Send unauthorized error in response
+  }
 });
 
 //View Host
@@ -384,7 +493,7 @@ app.post('/viewVisitor', async function(req, res){
  *   post:
  *     summary: "View hosts"
  *     description: "Retrieve hosts based on user role"
- *     tags: [Security & Host]
+ *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -399,47 +508,39 @@ app.post('/viewVisitor', async function(req, res){
  *     produces:
  *       - "application/json"
  *   securityDefinitions:
- *     JWT:
+ *     bearerAuth:
  *       type: "apiKey"
  *       name: "Authorization"
  *       in: "header"
  */
-app.post('/viewHost', async function(req, res) {
+app.post('/viewHost', async function(req, res){
+  const header = req.header('Authorization');
+  
+  // Check if Authorization header exists
+  if (!header || !header.startsWith("Bearer ")) {
+    return res.status(401).send("Invalid or no token"); // Send message if token is missing or malformed
+  }
+
+  const token = header.split(" ")[1];
+  
   try {
-    const token = req.header('Authorization').split(" ")[1];
-    const decodedToken = jwt.verify(token, privatekey);
-
-    // Validate token and role
-    if (decodedToken && decodedToken.role === "admin") {
-      const { idNumber } = decodedToken;
-
-      // Validate that idNumber is present in the decoded token
-      if (!idNumber) {
-        console.log("Invalid token: 'idNumber' is missing");
-        return res.status(401).send("Unauthorized");
-      }
-
-      const hostData = await viewHost(idNumber, decodedToken.role);
-      res.status(200).send(hostData);
-    } else {
-      console.log("Access Denied!");
-      res.status(403).send("Access Denied");
-    }
-  } catch (err) {
-    console.error("Error decoding token:", err.message);
-    res.status(401).send("Unauthorized");
+    const decoded = jwt.verify(token, privatekey);
+    return res.send(await viewHost(decoded.idNumber, decoded.role)); // Removed 'res' as it's not needed for the function
+  } catch(err) {
+    return res.status(401).send("Invalid token"); // Send "Invalid token" instead of "Unauthorized"
   }
 });
 
 
-//register visitor
+//issue pass visitor
 /**
  * @swagger
- * /createpassVisitor:
+ * /issuepassVisitor:
  *   post:
  *     summary: Create a visitor pass
  *     description: Create a new visitor pass (accessible to Hosts and security personnel)
- *     tags: [Security & Host]
+ *     tags:
+ *       - Host & Security 
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -489,195 +590,257 @@ app.post('/viewHost', async function(req, res) {
  *       '403':
  *         description: Forbidden - User does not have access to register a visitor
  */
-app.post('/createpassVisitor', async function(req, res) {
-  var token = req.header('Authorization').split(" ")[1];
+app.post('/issuepassVisitor', async function(req, res){
+  const header = req.header('Authorization');
+  
+  // Check if Authorization header exists
+  if (!header || !header.startsWith("Bearer ")) {
+    return res.status(401).send("Invalid or no token"); // Send message if token is missing or malformed
+  }
+
+  const token = header.split(" ")[1];
   let decoded;
 
   try {
     decoded = jwt.verify(token, privatekey);
-    await client.connect();
-    const hostidnumber = decoded.idNumber;
-    const host = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: hostidnumber });
-    
-    if (host) {
-      const hostnumber = host.phoneNumber;
-      console.log(decoded.role);
-      
-      if (decoded.role === "Host" || decoded.role === "security") {
-        const {
-          role, name, idNumber, documentType, gender, birthDate,
-          age, documentExpiry, company, TelephoneNumber,
-          vehicleNumber, category, ethnicity, photoAttributes,
-          passNumber, password
-        } = req.body;
-
-        // Pass the hostnumber to createpassVisitor function
-        await createpassVisitor(
-          role, name, idNumber, documentType, gender, birthDate,
-          age, documentExpiry, company, TelephoneNumber,
-          vehicleNumber, category, ethnicity, photoAttributes,
-          passNumber, password, hostnumber
-        );
-
-        res.send("Pass visitor created successfully");
-      } else {
-        console.log("Access Denied!");
-        res.status(403).send("Access Denied"); // Send a 403 Forbidden response
-      }
-    } else {
-      console.log("Host not found!");
-      res.status(404).send("Host not found");
-    }
-  } catch (err) {
+    console.log(decoded.role);
+  } catch(err) {
     console.log("Error decoding token:", err.message);
-    res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
-  } finally {
-    await client.close();
+    return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
+  }
+
+  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
+      const {
+          role, name, idNumber, documentType, gender, birthDate, age, 
+          documentExpiry, company, TelephoneNumber, vehicleNumber, 
+          category, ethnicity, photoAttributes, passNumber, password
+      } = req.body;
+
+      await issuepassVisitor(role, name, idNumber, documentType, gender, birthDate, 
+                              age, documentExpiry, company, TelephoneNumber, 
+                              vehicleNumber, category, ethnicity, photoAttributes, 
+                              passNumber, password);
+  } else {
+      console.log("Access Denied!");
+      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
   }
 });
 
-
-
-
-//change pass number
-/**
- * @swagger
- * /changePassNumber:
- *   post:
- *     summary: Change pass number
- *     description: Change pass number for a user
- *     tags: [Security & Host]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               savedidNumber:
- *                 type: string
- *               newpassNumber:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Pass number changed successfully
- *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '500':
- *         description: Internal Server Error
- */
-app.post('/changePassNumber', async function (req, res){
-  const {savedidNumber, newpassNumber} = req.body
-  await changePassNumber(savedidNumber, newpassNumber)
-  res.send(req.body)
-})
-
-//delete visitor
-/**
- * @swagger
- * /deleteVisitor:
- *   post:
- *     summary: Delete a visitor
- *     description: Delete a visitor by name and ID number
- *     tags: [Visitor]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               idNumber:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Visitor deleted successfully
- *       '401':
- *         description: Unauthorized - Invalid or missing token
- *       '500':
- *         description: Internal Server Error
- */
-app.post('/deleteVisitor', async function (req, res){
-  const {name, idNumber} = req.body
-  await deleteVisitor(name, idNumber)
-  res.send(req.body)
-})
+//delete Visitor
+// app.post('/deleteVisitor', async function (req, res){
+//   const {name, idNumber} = req.body
+//   await deleteVisitor(name, idNumber)
+//   res.send(req.body)
+// })
 
 // Retrieve Phone Number
 /**
  * @swagger
  * /retrievePhoneNumber:
  *   post:
- *     summary: Retrieve host phone number
- *     description: Retrieve the phone number of a host based on the provided ID number (accessible to security personnel).
- *     tags: [Security & Host]
+ *     summary: "Retrieve Phone Number for Security Role"
+ *     description: "Retrieve the phone number of a host based on provided ID number if the user role is 'security'."
+ *     tags:
+ *       - Security
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *     responses:
- *       '200':
- *         description: Successfully retrieved the host's phone number.
+ *     parameters:
+ *       - in: body
+ *         name: idNumber
+ *         required: true
  *         schema:
  *           type: object
  *           properties:
- *             phoneNumber:
+ *             idNumber:
  *               type: string
+ *     responses:
+ *       '200':
+ *         description: "Successfully retrieved the phone number."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 phoneNumber:
+ *                   type: string
  *       '401':
- *         description: Unauthorized - Invalid or expired token.
+ *         description: "Unauthorized - Invalid or expired token."
  *       '403':
- *         description: Forbidden - User does not have the necessary permissions.
+ *         description: "Forbidden - User does not have the necessary permissions."
  *       '404':
- *         description: Visitor with the provided ID number does not exist in the database.
- *       '500':
- *         description: Internal server error occurred.
+ *         description: "Not Found - Visitor with the provided ID number does not exist in the database."
+ *       '400':
+ *         description: "Bad Request - Invalid or no token provided."
+ *     consumes:
+ *       - "application/json"
+ *     produces:
+ *       - "application/json"
+ *   securityDefinitions:
+ *     bearerAuth:
+ *       type: apiKey
+ *       name: Authorization
+ *       scheme: bearer
+ *       in: header
  */
-app.post('/retrievePhoneNumber', async function (req, res) {
+app.post('/retrievePhoneNumber', async function (req, res){
+  var token = req.header('Authorization') ? req.header('Authorization').split(" ")[1] : null;
+
+  if (!token) {
+    return res.status(400).send("Invalid or no token"); // Send "Invalid or no token" response
+  }
+
   try {
-    const token = req.header('Authorization').split(" ")[1];
-    const decoded = jwt.verify(token, privatekey);
-
-    if (decoded.role === "security") {
+    let decoded = jwt.verify(token, privatekey);
+    
+    if (decoded && decoded.role === "security") {
       const { idNumber } = req.body;
-
-      // Validate that idNumber is present in the request body
-      if (!idNumber) {
-        console.log("Invalid request: 'idNumber' is missing");
-        return res.status(400).send("Invalid request: 'idNumber' is missing");
-      }
-
+      
       try {
-        const phoneNumber = await retrievePhoneNumber(idNumber);
+        const phoneNumberResponse = await retrievePhoneNumber(idNumber);
         // Send the phone number in the response body
-        res.status(200).send({ phoneNumber });
+        res.status(200).send(phoneNumberResponse);
       } catch (error) {
         // Handle errors such as visitor not found
-        console.error("Error retrieving phone number:", error.message);
-        res.status(404).send(`Visitor with ID number '${idNumber}' not found`);
+        res.status(404).send(error.message);
       }
     } else {
-      console.log("Access Denied!");
+      // Send "Access Denied" response
       res.status(403).send("Access Denied");
     }
-  } catch (err) {
-    console.error("Error decoding token:", err.message);
+  } catch(err) {
+    // Send "Unauthorized" response
     res.status(401).send("Unauthorized");
   }
 });
 
+// Manage User Role
+/**
+ * @swagger
+* /manageRole:
+*   post:
+  *     summary: Manage user role
+  *     description: Manage the role of a user by updating the role associated with the provided ID number (accessible to administrators).
+  *     tags: [Admin]
+  *     security:
+  *       - bearerAuth: []
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               idNumber:
+  *                 type: string
+  *               role:
+  *                 type: string
+  *     responses:
+  *       '200':
+  *         description: Role managed successfully.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: true
+  *                 message:
+  *                   type: string
+  *                   example: Role managed successfully!
+  *       '400':
+  *         description: Bad Request - Role management failed.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: Username not in the database!
+  *       '401':
+  *         description: Unauthorized - Invalid or missing token.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: Unauthorized
+  *       '403':
+  *         description: Forbidden - User does not have the necessary permissions.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: Access Denied
+  *       '500':
+  *         description: Internal server error occurred.
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                 success:
+  *                   type: boolean
+  *                   example: false
+  *                 message:
+  *                   type: string
+  *                   example: An error occurred.
+ */
+app.post('/manageRole', async function (req, res){
+  var token;
+
+  // Check if Authorization header is present and contains the Bearer token
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else {
+    // Send a 400 Bad Request response if no token is found
+    return res.status(400).json({ success: false, message: "Invalid or no token provided" });
+  }
+
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, privatekey);
+  } catch(err) {
+    console.log("Error decoding token:", err.message);
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  if (decoded && (decoded.role === "admin")){
+    const { idNumber, role } = req.body;
+
+    try {
+      const result = await manageRole(idNumber, role);
+      
+      if (result.success) {
+        res.status(200).json({ success: true, message: result.message });
+      } else {
+        res.status(400).json({ success: false, message: result.message });
+      }
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ success: false, message: "An error occurred" });
+    }
+  } else {
+    console.log("Access Denied!");
+    res.status(403).json({ success: false, message: "Access Denied" });
+  }
+});
 
 
 app.listen(port, () => {
@@ -719,156 +882,194 @@ async function createListing2(client, newListing){
 }
 
 //READ(retrieve pass as visitor)
-async function retrieveVisitor(res, idNumber, password){
+async function retrieveVisitor(res, idNumber) {
   await client.connect();
-    const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
-    if(exist){
-        if(bcrypt.compare(password,await exist.password)){
-        console.log("Welcome!");
-        token = jwt.sign({ idNumber: idNumber, role: exist.role}, privatekey);
-        res.send({
-          "Token": token,
-          "Visitor Info": exist
-        });
-        
-        res.send(exist);
-        await logs(id, exist.name, exist.role);
-        }else{
-            console.log("Wrong password!")
-        }
-    }else{
-        console.log("Visitor not exist!");
+  
+  try {
+    const exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: idNumber });
+    
+    if (exist) {
+      const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+      res.status(200).send({
+        "Token": token,
+        "Visitor Info": exist
+      });
+      await logs(idNumber, exist.name, exist.role); // Assuming the logs function is correct.
+    } else {
+      res.status(404).send("Visitor not found!"); // Send visitor not found message in response
     }
+  } catch (error) {
+    console.error("Error retrieving visitor:", error);
+    res.status(500).send("Internal Server Error"); // Handle any unexpected errors.
+  }
 }
 
 //READ(view all visitors)
-async function viewVisitor(idNumber, role){
-  var exist;
+async function viewVisitor(idNumberHost, role, res) {
   await client.connect();
-  if(role == "Host" || role == "security"){
-    exist = await client.db("assignmentCondo").collection("visitor").find({}).toArray();
+  let exist;
+
+  if (role === "Host") {
+    exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumberHost: idNumberHost });
+    if (!exist) {
+      return res.status(404).send("No visitors found for this host."); // Send not found error in response
+    }
+    return res.status(200).send(exist); // Send existing visitor details in response
+  } 
+  else if (role === "visitor" || role === "security") {
+    return res.status(403).send("Forbidden! You don't have permission to view this information."); // Send forbidden error in response
+  } 
+  else {
+    return res.status(400).send("Invalid role!"); // Send bad request error in response for invalid role
   }
-  else if(role == "visitor"){
-    exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber});
-  }
-  return exist;
 }
 
 //READ(view all visitors)
-async function viewHost(idNumber, role){
+async function viewHost(idNumber, role, res){ // Add res as a parameter
   var exist;
   await client.connect();
-  if(role == "admin"){
+  
+  if(role === "admin"){
     exist = await client.db("assignmentCondo").collection("owner").find({}).toArray();
   }
-  else if(role == "security" || role == "visitor"){
-    console.log("Visitor not exist!");
+  else if(role === "security" || role === "visitor"){
+    res.status(403).send("Forbidden! You don't have permission to access this."); // Send Forbidden status if role is not admin
   }
+  
   return exist;
 }
 
 //READ(login as Host)
-async function loginHost(res, idNumber, hashed){
-  await client.connect()
+async function loginHost(res, idNumber, hashed) {
+  await client.connect();
   const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: idNumber });
-    if (exist) {
-        const passwordMatch = await bcrypt.compare(exist.password, hashed);
-        if (passwordMatch) {
-            console.log("Login Success!\nRole: "+ exist.role);
-            logs(idNumber, exist.name, exist.role);
-            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
-            res.send("Token: " + token);
-        } else {
-            console.log("Wrong password!");
-        }
+  
+  if (exist) {
+    const passwordMatch = await bcrypt.compare(exist.password, hashed);
+    if (passwordMatch) {
+      console.log("Login Success!\nRole: " + exist.role);
+      logs(idNumber, exist.name, exist.role);
+      const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+      res.send("Token: " + token);
     } else {
-        console.log("Username not exist!");
+      // Send password mismatch error in response
+      res.status(401).send("Wrong password!");
     }
+  } else {
+    // Send username not found error in response
+    res.status(404).send("Username not exist!");
+  }
 }
 
-//READ(login as Security)
-async function loginSecurity(res, idNumber, hashed){
-  await client.connect()
+
+// READ (login as Security)
+async function loginSecurity(res, idNumber, hashed) {
+  await client.connect();
   const exist = await client.db("assignmentCondo").collection("security").findOne({ idNumber: idNumber });
-    if (exist) {
-        const passwordMatch = await bcrypt.compare(exist.password, hashed);
-        if (passwordMatch) {
-            console.log("Login Success!\nRole: "+ exist.role);
-            logs(idNumber, exist.name, exist.role);
-            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
-            res.send("Token: " + token);
-        } else {
-            console.log("Wrong password!");
-        }
+  
+  if (exist) {
+    const passwordMatch = await bcrypt.compare(exist.password, hashed);
+    if (passwordMatch) {
+      console.log("Login Success!\nRole: " + exist.role);
+      logs(idNumber, exist.name, exist.role);
+      const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+      res.send("Token: " + token);
     } else {
-        console.log("Username not exist!");
+      // Send password mismatch error in response
+      res.status(401).send("Wrong password!");
     }
+  } else {
+    // Send username not found error in response
+    res.status(404).send("Username not exist!");
+  }
 }
 
-//READ(login as Admin)
-async function loginAdmin(res,idNumber, hashed){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
-    if (exist) {
-        const passwordMatch = await bcrypt.compare(exist.password, hashed);
-        if (passwordMatch) {
-            console.log("Login Success!\nRole: "+ exist.role);
-            logs(idNumber, exist.name, exist.role);
-            const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
-            res.send("Token: " + token);
-        } else {
-            console.log("Wrong password!");
-        }
-    } else {
-        console.log("Username not exist!");
-    }
-}
+async function loginAdmin(res, idNumber, hashed) {
+  await client.connect();
 
-//manageRole
-async function manageRole(idNumber, role){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("owner").findOne({idNumber: idNumber})
-  if(exist){
-    await client.db("assignmentCondo").collection("owner").updateOne({idNumber: idNumber}, {$set: {role: role}})
-    console.log("Role managed successfully!")
-  }else{
-    console.log("Username not exist!")
+  try {
+    const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
+
+    if (exist) {
+      const passwordMatch = await bcrypt.compare(hashed, exist.password);
+
+      if (passwordMatch) {
+        console.log("Login Success!\nRole: " + exist.role);
+        logs(idNumber, exist.name, exist.role);
+        const token = jwt.sign({ idNumber: idNumber, role: exist.role }, privatekey);
+        res.status(200).json({ success: true, message: "Login Success!", token: token });
+      } else {
+        console.log("Wrong password!");
+        res.status(401).json({ success: false, message: "Wrong password!" });
+      }
+    } else {
+      console.log("Username not exist!");
+      res.status(404).json({ success: false, message: "Username not exist!" });
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ success: false, message: "An error occurred" });
+  } finally {
+    client.close();
   }
 }
 
 
 //CREATE(register Host)
-async function registerHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("owner").findOne({idNumber: newidNumber})
-  if(exist){
-    console.log("Host has already registered")
-  }else{
-    await createListing1(client,
-      {
-        role: newrole,
-        name: newname,
-        idNumber: newidNumber,
-        email: newemail,
-        password: newpassword,
-        phoneNumber: newphoneNumber
-      }
-    );
-    console.log("Host registered sucessfully")
+async function registerHost(decoded, data, res) {
+  if (decoded && decoded.role === "security") {
+    await client.connect();
+    const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: data.idNumber });
+
+    if (exist) {
+      res.status(400).send("Host has already registered"); // Send message in response
+    } else {
+      await createListing1(client, {
+        role: data.role,
+        name: data.name,
+        idNumber: data.idNumber,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phoneNumber
+      });
+      res.status(200).send("Host registered successfully"); // Send message in response
+    }
+  } else {
+    res.status(403).send("You have no access to register a Host!"); // Send forbidden message
+  }
+}
+
+//CREATE(register Host)
+async function registertestHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber, res) {
+  await client.connect();
+  const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: newidNumber });
+
+  if (exist) {
+    res.status(400).send("Host has already registered"); // Send message in response
+  } else {
+    await createListing1(client, {
+      role: newrole,
+      name: newname,
+      idNumber: newidNumber,
+      email: newemail,
+      password: newpassword,
+      phoneNumber: newphoneNumber
+    });
+    res.status(200).send("Host registered successfully"); // Send message in response
   }
 }
 
 //CREATE(register Visitor)
-async function createpassVisitor(newrole, newname, newidNumber, newdocumentType, newgender, newbirthDate, 
+async function issuepassVisitor(newrole, newname, newidNumber, newdocumentType, newgender, newbirthDate, 
                         newage, newdocumentExpiry, newcompany, newTelephoneNumber, newvehicleNumber,
-                        newcategory, newethnicity, newphotoAttributes, newpassNumber, password){
+                        newcategory, newethnicity, newphotoAttributes, newpassNumber, password, res){
   //TODO: Check if username exist
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: newidNumber})
-  //hashed = await bcrypt.hash(password, 10);
+  await client.connect();
+  const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: newidNumber});
+  
   if(exist){
-      console.log("Visitor has already registered")
-  }else{
+      res.status(400).send("Visitor has already registered"); // Send a 400 Bad Request status
+  } else {
       await client.db("assignmentCondo").collection("visitor").insertOne(
         {
           role: newrole,
@@ -876,7 +1077,7 @@ async function createpassVisitor(newrole, newname, newidNumber, newdocumentType,
           idNumber: newidNumber,
           documentType: newdocumentType,
           gender: newgender,
-          birthDate:newbirthDate,
+          birthDate: newbirthDate,
           age: newage,
           documentExpiry: newdocumentExpiry,
           company: newcompany,
@@ -889,53 +1090,85 @@ async function createpassVisitor(newrole, newname, newidNumber, newdocumentType,
           password: password 
         }
       );
-      console.log("Registered successfully!")
+      res.status(200).send("Registered successfully!"); // Send a 200 OK status
   }
-} 
+}
+
 
 //READ(retrieve phone number for visitor)
 async function retrievePhoneNumber(idNumber){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: idNumber})
+  await client.connect();
+  const exist = await client.db("assignmentCondo").collection("host").findOne({idNumber: idNumber});
   
   if(exist){
     // Return the phone number in the response body
     return { phoneNumber: exist.TelephoneNumber };
   } else {
-    // Handle the case where the visitor does not exist
+    // Throw an error if the visitor does not exist
     throw new Error("Visitor does not exist.");
   }
 }
 
+async function manageRole(idNumber, role) {
+  try {
+    await client.connect();
+    
+    const ownerCollection = client.db("assignmentCondo").collection("owner");
+    const desiredCollection = client.db("assignmentCondo").collection("security");
 
-//UPDATE(change pass number)
-async function changePassNumber(savedidNumber, newpassNumber){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({idNumber: savedidNumber})
-  if(exist){
-    await client.db("assignmentCondo").collection("visitor").updateOne({idNumber: savedidNumber}, {$set: {passNumber: newpassNumber}})
-    console.log("Visitor's pass number has changed successfuly.")
-  }else{
-    console.log("The visitor does not exist.")
+    const user = await ownerCollection.findOne({ idNumber: idNumber });
+
+    if (user) {
+      // Update the role in the "owner" collection
+      await ownerCollection.updateOne({ idNumber: idNumber }, { $set: { role: role } });
+      console.log("Role managed successfully!");
+
+      // Insert the user's data into the desired collection if it doesn't exist there
+      const userInDesiredCollection = await desiredCollection.findOne({ idNumber: idNumber });
+
+      if (!userInDesiredCollection) {
+        await desiredCollection.insertOne(user);
+        console.log("User data added to the desired collection.");
+      }
+
+      // Delete the user from the old collection
+      await ownerCollection.deleteOne({ idNumber: idNumber });
+      console.log("User data deleted from the old collection.");
+
+      // Send a success response to the client
+      return { success: true, message: "Role managed successfully!" };
+    } else {
+      // Send an error response to the client
+      return { success: false, message: "Username not in the database!" };
+    }
+  } catch (error) {
+    // Handle other errors
+    console.log("Error:", error.message);
+    // Send an error response to the client
+    return { success: false, message: "An error occurred." };
+  } finally {
+    client.close();
   }
 }
+
+
 
 //DELETE(delete visitor)
-async function deleteVisitor(oldname, oldidNumber){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: oldname})
-  if(exist){
-    checkidNumber = await exist.idNumber;
-    if(oldidNumber == checkidNumber){
-      await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
-      console.log("Visitor account deleted successfully.")
-    }else{
-      console.log("ID number is incorrect")
-    }
-  }else{
-    console.log("Visitor does not exist.")
-  }
-}
+//async function deleteVisitor(oldname, oldidNumber){
+//  await client.connect()
+//  const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: oldname})
+//  if(exist){
+//    checkidNumber = await exist.idNumber;
+//    if(oldidNumber == checkidNumber){
+//      await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
+//       console.log("Visitor account deleted successfully.")
+//     }else{
+//      console.log("ID number is incorrect")
+//     }
+//   }else{
+//     console.log("Visitor does not exist.")
+//   }
+// }
 
 //Generate hash password
 async function generateHash(password){
@@ -962,5 +1195,4 @@ function verifyToken(req, res, next) {
     res.user = decoded;
     next();
   });
-};
-
+}
