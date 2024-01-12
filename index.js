@@ -727,7 +727,7 @@ app.post('/retrievePhoneNumber', async function (req, res){
 *   post:
   *     summary: Manage user role
   *     description: Manage the role of a user by updating the role associated with the provided ID number (accessible to administrators).
-  *     tags: [Admin]
+  *     tags: [Host & Security & Admin]
   *     security:
   *       - bearerAuth: []
   *     requestBody:
