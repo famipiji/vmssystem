@@ -104,11 +104,12 @@ app.use(express.json());
  *               type: string
  *               example: "Internal Server Error!"
  */
-app.post( '/loginHost',async function (req, res) {
-  let {idNumber, password} = req.body;
+app.post('/loginHost', async (req, res) => {
+  const { idNumber, password } = req.body;
   const hashed = await generateHash(password);
-  await loginHost(res, idNumber, hashed)
-})
+  await loginHost(res, idNumber, hashed);
+});
+
 
 //login as Security
 /**
