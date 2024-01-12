@@ -1103,18 +1103,26 @@ async function issuepassVisitor(newrole, newname, newidNumber, newdocumentType, 
 
 
 //READ(retrieve phone number for visitor)
-async function retrievePhoneNumber(idNumber){
-  await client.connect();
-  const exist = await client.db("assignmentCondo").collection("host").findOne({idNumber: idNumber});
-  
-  if(exist){
-    // Return the phone number in the response body
-    return { phoneNumber: exist.TelephoneNumber };
-  } else {
-    // Throw an error if the visitor does not exist
-    throw new Error("Visitor does not exist.");
+async function retrievePhoneNumber(idNumber) {
+  try {
+    await client.connect();
+    const exist = await client.db("assignmentCondo").collection("host").findOne({ idNumber: idNumber });
+
+    if (exist) {
+      // Return the phone number in the response body
+      return { phoneNumber: exist.TelephoneNumber };
+    } else {
+      // Throw an error if the visitor does not exist
+      throw new Error("Visitor does not exist.");
+    }
+  } catch (error) {
+    console.error("Error retrieving phone number:", error);
+    throw error; // Re-throw the error to handle it at a higher level if necessary
+  } finally {
+    await client.close(); // Close the MongoDB connection in the finally block
   }
 }
+
 
 //ManageRole
 async function manageRole(idNumber, role) {
