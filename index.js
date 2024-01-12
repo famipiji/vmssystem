@@ -1162,21 +1162,31 @@ async function manageRole(idNumber, role) {
 
 
 //DELETE(delete visitor)
-async function deleteVisitor(oldname, oldidNumber){
-  await client.connect()
-  const exist = await client.db("assignmentCondo").collection("visitor").findOne({name: oldname})
-  if(exist){
-    checkidNumber = await exist.idNumber;
-    if(oldidNumber == checkidNumber){
-      await client.db("assignmentCondo").collection("visitor").deleteOne({name: oldname})
-       console.log("Visitor account deleted successfully.")
-     }else{
-      console.log("ID number is incorrect")
-     }
-   }else{
-     console.log("Visitor does not exist.")
-   }
+async function deleteVisitor(oldname, oldidNumber) {
+  try {
+    await client.connect();
+
+    const existingVisitor = await client.db("assignmentCondo").collection("visitor").findOne({ name: oldname });
+
+    if (existingVisitor) {
+      const storedIdNumber = existingVisitor.idNumber;
+
+      if (oldidNumber === storedIdNumber) {
+        await client.db("assignmentCondo").collection("visitor").deleteOne({ name: oldname });
+        console.log("Visitor account deleted successfully.");
+      } else {
+        console.log("ID number is incorrect.");
+      }
+    } else {
+      console.log("Visitor does not exist.");
+    }
+  } catch (error) {
+    console.error("An error occurred while deleting the visitor account:", error);
+  } finally {
+    await client.close(); // Close the MongoDB connection in the finally block
+  }
 }
+
 
 //Generate hash password
 async function generateHash(password){
