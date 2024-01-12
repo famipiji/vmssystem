@@ -148,11 +148,12 @@ app.post('/loginHost', async (req, res) => {
  *       '500':
  *         description: Internal Server Error - Failed to authenticate due to server error.
  */
-app.post('/loginSecurity', async function (req, res) {
-  let { idNumber, password } = req.body;
+app.post('/loginSecurity', async (req, res) => {
+  const { idNumber, password } = req.body;
   const hashed = await generateHash(password);
   await loginSecurity(res, idNumber, hashed);
 });
+
 
 //login as Admin
 /**
