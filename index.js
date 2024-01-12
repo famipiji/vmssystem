@@ -1189,11 +1189,17 @@ async function deleteVisitor(oldname, oldidNumber) {
 
 
 //Generate hash password
-async function generateHash(password){
-  const saltRounds = 10
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
-  return hashedPassword;
+async function generateHash(password) {
+  try {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword;
+  } catch (error) {
+    console.error("Error generating hash:", error);
+    throw error; // Re-throw the error to handle it at a higher level if necessary
+  }
 }
+
 
 //Verify JWT Token
 function verifyToken(req, res, next) {
