@@ -1047,20 +1047,20 @@ async function registerHost(decoded, data, res) {
 }
 
 //CREATE(register Host)
-async function registertestHost(newrole, newname, newidNumber, newemail, newpassword, newphoneNumber, res) {
+async function registertestHost(data, res) {
   await client.connect();
-  const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: newidNumber });
+  const exist = await client.db("assignmentCondo").collection("owner").findOne({ idNumber: data.newidNumber });
 
   if (exist) {
     res.status(400).send("Host has already registered"); // Send message in response
   } else {
     await createListing1(client, {
-      role: newrole,
-      name: newname,
-      idNumber: newidNumber,
-      email: newemail,
-      password: newpassword,
-      phoneNumber: newphoneNumber
+      role: data.newrole,
+      name: data.newname,
+      idNumber: data.newidNumber,
+      email: data.newemail,
+      password: data.newpassword,
+      phoneNumber: data.newphoneNumber
     });
     res.status(200).send("Host registered successfully"); // Send message in response
   }
