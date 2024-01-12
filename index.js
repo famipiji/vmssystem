@@ -644,7 +644,7 @@ app.post('/issuepassVisitor', async function(req, res){
  *     summary: "Retrieve Phone Number for Security Role"
  *     description: "Retrieve the phone number of a host based on provided ID number if the user role is 'security'."
  *     tags:
- *       - Security
+ *       - Visitor
  *     security:
  *       - bearerAuth: []
  *     parameters:
