@@ -280,10 +280,11 @@ app.post('/loginAdmin', async (req, res) => {
  *     security:
  *       - bearerAuth: []
  */
-app.post('/retrieveVisitor', async function(req, res) {
+app.post('/retrieveVisitor', async (req, res) => {
   const { idNumber } = req.body;
-  retrieveVisitor(res, idNumber); // Only pass idNumber to the function
+  await retrieveVisitor(res, idNumber); // Only pass idNumber to the function
 });
+
 
 
 //register Host
