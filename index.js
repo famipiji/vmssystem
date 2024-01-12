@@ -291,7 +291,7 @@ app.post('/retrieveVisitor', async function(req, res) {
  *     summary: Register a Host
  *     description: Register a new host if the requester has security access.
  *     tags:
- *       - Security
+ *       - Host
  *     security:
  *       - bearerAuth: []
  *     requestBody:
