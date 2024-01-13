@@ -991,15 +991,14 @@ async function loginSecurity(res, idNumber, hashed) {
 }
 
 //loginAdmin
-async function loginAdmin(res, idNumber, password) {
+async function loginAdmin(res, idNumber, hashed) {
+  await client.connect();
 
   try {
-    await client.connect();
-
     const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
 
     if (exist) {
-      const passwordMatch = await bcrypt.compare(password, exist.password);
+      const passwordMatch = await bcrypt.compare(hashed, exist.password);
 
       if (passwordMatch) {
         console.log("Login Success!\nRole: " + exist.role);
@@ -1018,7 +1017,7 @@ async function loginAdmin(res, idNumber, password) {
     console.error("Error:", error.message);
     res.status(500).json({ success: false, message: "An error occurred" });
   } finally {
-    await client.close();
+    client.close();
   }
 }
 
