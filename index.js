@@ -162,7 +162,7 @@ app.post('/loginSecurity', async (req, res) => {
 *   post:
   *     summary: Admin Login
   *     description: Authenticate as an administrator and receive a JWT token.
-  *     tags: [Login]
+  *     tags: [Admin]
   *     requestBody:
   *       required: true
   *       content:
