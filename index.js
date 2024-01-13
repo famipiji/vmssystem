@@ -992,8 +992,6 @@ async function loginSecurity(res, idNumber, hashed) {
 
 //loginAdmin
 async function loginAdmin(res, idNumber, hashed) {
-  const client = new MongoClient("ymongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"); // Replace with your MongoDB URI
-
   try {
     await client.connect();
 
