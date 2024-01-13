@@ -992,9 +992,11 @@ async function loginSecurity(res, idNumber, hashed) {
 
 //loginAdmin
 async function loginAdmin(res, idNumber, hashed) {
-  await client.connect();
+  const client = new MongoClient("ymongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"); // Replace with your MongoDB URI
 
   try {
+    await client.connect();
+
     const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
 
     if (exist) {
@@ -1017,9 +1019,10 @@ async function loginAdmin(res, idNumber, hashed) {
     console.error("Error:", error.message);
     res.status(500).json({ success: false, message: "An error occurred" });
   } finally {
-    client.close();
+    await client.close();
   }
 }
+
 
 //CREATE(register Host)
 async function registerHost(decoded, data, res) {
