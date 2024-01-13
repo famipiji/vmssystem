@@ -990,6 +990,7 @@ async function loginSecurity(res, idNumber, hashed) {
   }
 }
 
+//loginAdmin
 async function loginAdmin(res, idNumber, hashed) {
   await client.connect();
 
@@ -1019,7 +1020,6 @@ async function loginAdmin(res, idNumber, hashed) {
     client.close();
   }
 }
-
 
 //CREATE(register Host)
 async function registerHost(decoded, data, res) {
