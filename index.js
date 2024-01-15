@@ -985,8 +985,8 @@ async function loginSecurity(res, idNumber, hashed) {
 }
 
 async function loginAdmin(res, idNumber, hashed) {
-  await client.connect();
 
+  await client.connect();
   try {
     const exist = await client.db("assignmentCondo").collection("admin").findOne({ idNumber: idNumber });
 
