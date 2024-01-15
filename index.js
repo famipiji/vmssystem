@@ -911,7 +911,7 @@ async function viewVisitor(idNumberHost, role, res) {
   let exist;
 
   if (role === "host") {
-    exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumberHost: idNumberHost });
+    exist = await client.db("assignmentCondo").collection("visitor").find({ idNumberHost: idNumberHost });
     if (!exist) {
       return res.status(404).send("No visitors found for this host."); // Send not found error in response
     }
