@@ -911,8 +911,8 @@ async function viewVisitor(idNumberHost, role, res) {
   let exist;
 
   if (role === "host") {
-    exist = await client.db("assignmentCondo").collection("visitor").find({ idNumberHost: idNumberHost });
-    if (!exist) {
+    exist = await client.db("assignmentCondo").collection("visitor").find({ idNumberHost: idNumberHost }).toArray();
+    if (!exist || exist.length === 0) {
       return res.status(404).send("No visitors found for this host."); // Send not found error in response
     }
     return res.status(200).send(exist); // Send existing visitor details in response
@@ -924,6 +924,7 @@ async function viewVisitor(idNumberHost, role, res) {
     return res.status(400).send("Invalid role!"); // Send bad request error in response for invalid role
   }
 }
+
 
 //READ(view all visitors)
 async function viewHost(idNumber, role, res){ // Add res as a parameter
