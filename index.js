@@ -610,7 +610,7 @@ app.post('/issuepassVisitor', async function(req, res){
     return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
   }
 
-  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
+  if (decoded && (decoded.role === "host" || decoded.role === "security")){
       const {
           role, name, idNumber, documentType, gender, birthDate, age, 
           documentExpiry, company, TelephoneNumber, vehicleNumber, 
@@ -910,7 +910,7 @@ async function viewVisitor(idNumberHost, role, res) {
   await client.connect();
   let exist;
 
-  if (role === "Host") {
+  if (role === "host") {
     exist = await client.db("assignmentCondo").collection("visitor").findOne({ idNumberHost: idNumberHost });
     if (!exist) {
       return res.status(404).send("No visitors found for this host."); // Send not found error in response
