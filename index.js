@@ -209,7 +209,7 @@ app.post('/manageRole', async function (req, res){
     return res.status(401).send("Unauthorized");
   }
 
-  if (decoded && (decoded.role === "admin" || decoded.role === "security")){
+  if (decoded && (decoded.role === "admin")){
     const { idNumber, role } = req.body;
 
     try {
@@ -367,14 +367,23 @@ app.post('/registerHost', async function (req, res) {
  *       in: "header"
  */
 app.post('/viewVisitor', async function(req, res){
-  var token = req.header('Authorization').split(" ")[1];
   try {
-      var decoded = jwt.verify(token, privatekey);
-      console.log(decoded.role);
-      res.send(await viewVisitor(decoded.idNumber, decoded.role));
-    } catch(err) {
-      res.send("Error!");
+    var token = req.header('Authorization')?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).send("Unauthorized: Token missing");
     }
+
+    var decoded = jwt.verify(token, privatekey);
+    console.log(decoded.role);
+
+    const result = await viewVisitor(decoded.idNumber, decoded.role);
+    
+    res.status(200).send(result);
+  } catch(err) {
+    console.error("Error viewing visitor:", err.message);
+    res.status(500).send("Internal Server Error");
+  }
 });
 
 //View Host
