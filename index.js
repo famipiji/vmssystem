@@ -1188,7 +1188,7 @@ function verifyToken(req, res, next) {
 
   let token = header.split(' ')[1];
 
-  jwt.verify(token, 'PRXgaming', function(err, decoded) {
+  jwt.verify(token, 'Ch1piCh@pa', function(err, decoded) {
     if (err) {
       console.error(err);
       return res.status(401).send('Invalid token');
