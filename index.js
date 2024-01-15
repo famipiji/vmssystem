@@ -5,11 +5,6 @@ const port = process.env.PORT || 3000;
 app.use(express.json())
 var jwt = require('jsonwebtoken')
 
-//mongoDB
-const { MongoClient} = require("mongodb");
-const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
-const  client = new MongoClient(uri)
-
 //swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -35,6 +30,10 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+//mongoDB
+const { MongoClient} = require("mongodb");
+const uri = "mongodb+srv://fahmi:1234@assignmentcondo.q2tnhgu.mongodb.net/?retryWrites=true&w=majority"
+const  client = new MongoClient(uri)
 
 //bcrypt
 const bcrypt = require('bcrypt');
@@ -46,6 +45,53 @@ const privatekey = "PRXWGaming";
 var checkpassword;
 
 app.use(express.json());
+
+//retrieve Visitor info
+/**
+ * @swagger
+ * /retrieveVisitor:
+ *   post:
+ *     summary: "Retrieve visitor information"
+ *     description: "Retrieve visitor information based on the provided idNumber."
+ *     tags:
+ *       - Visitor
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               idNumber:
+ *                 type: string
+ *                 description: "The unique ID number of the visitor."
+ *             required:
+ *               - idNumber
+ *     responses:
+ *       '200':
+ *         description: "Successfully retrieved visitor information."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 Token:
+ *                   type: string
+ *                   description: "JWT token for authentication."
+ *                 Visitor Info:
+ *                   type: object
+ *                   description: "Details of the visitor."
+ *       '404':
+ *         description: "Visitor not found."
+ *       '500':
+ *         description: "Internal Server Error."
+ *     security:
+ *       - bearerAuth: []
+ */
+app.post('/retrieveVisitor', async function(req, res) {
+  const { idNumber } = req.body;
+  retrieveVisitor(res, idNumber); // Only pass idNumber to the function
+});
 
 //login as Host
 /**
@@ -231,53 +277,6 @@ app.post('/loginAdmin', async function (req, res) {
   let { idNumber, password } = req.body;
   const hashed = await generateHash(password);
   await loginAdmin(res, idNumber, hashed);
-});
-
-//retrieve Visitor info
-/**
- * @swagger
- * /retrieveVisitor:
- *   post:
- *     summary: "Retrieve visitor information"
- *     description: "Retrieve visitor information based on the provided idNumber."
- *     tags:
- *       - Visitor
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               idNumber:
- *                 type: string
- *                 description: "The unique ID number of the visitor."
- *             required:
- *               - idNumber
- *     responses:
- *       '200':
- *         description: "Successfully retrieved visitor information."
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 Token:
- *                   type: string
- *                   description: "JWT token for authentication."
- *                 Visitor Info:
- *                   type: object
- *                   description: "Details of the visitor."
- *       '404':
- *         description: "Visitor not found."
- *       '500':
- *         description: "Internal Server Error."
- *     security:
- *       - bearerAuth: []
- */
-app.post('/retrieveVisitor', async function(req, res) {
-  const { idNumber } = req.body;
-  retrieveVisitor(res, idNumber); // Only pass idNumber to the function
 });
 
 
