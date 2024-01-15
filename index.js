@@ -209,7 +209,7 @@ app.post('/manageRole', async function (req, res){
     return res.status(401).send("Unauthorized");
   }
 
-  if (decoded && (decoded.role === "admin")){
+  if (decoded && (decoded.role === "admin" || decoded.role === "security")){
     const { idNumber, role } = req.body;
 
     try {
@@ -481,6 +481,8 @@ app.post('/viewHost', async function(req, res) {
  *                 type: string
  *               password:
  *                type: string
+ *               hostnumber:
+ *                 type: string
  *     responses:
  *       '200':
  *         description: Visitor registered successfully
@@ -489,53 +491,37 @@ app.post('/viewHost', async function(req, res) {
  *       '403':
  *         description: Forbidden - User does not have access to register a visitor
  */
-app.post('/createpassVisitor', async function(req, res) {
+app.post('/createpassVisitor', async function(req, res){
   var token = req.header('Authorization').split(" ")[1];
-  let decoded;
-
+  const decoded = jwt.verify(token, privatekey);
   try {
-    decoded = jwt.verify(token, privatekey);
-    await client.connect();
-    const hostidnumber = decoded.idNumber;
-    const host = await client.db("assignmentCondo").collection("visitor").findOne({ idNumber: hostidnumber });
-    
-    if (host) {
-      const hostnumber = host.phoneNumber;
+    await client.connect()
+    const hostidnumber = await decoded.idNumber
+    const host = await client.db("assignmentCondo").collection("visitor").findOne(hostidnumber)
+    const hostnumber = host.phoneNumber;
+      decoded = jwt.verify(token, privatekey);
       console.log(decoded.role);
-      
-      if (decoded.role === "Host" || decoded.role === "security") {
-        const {
-          role, name, idNumber, documentType, gender, birthDate,
-          age, documentExpiry, company, TelephoneNumber,
-          vehicleNumber, category, ethnicity, photoAttributes,
-          passNumber, password
-        } = req.body;
+  } catch(err) {
+      console.log("Error decoding token:", err.message);
+      return res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
+  }
 
-        // Pass the hostnumber to createpassVisitor function
-        await createpassVisitor(
-          role, name, idNumber, documentType, gender, birthDate,
-          age, documentExpiry, company, TelephoneNumber,
-          vehicleNumber, category, ethnicity, photoAttributes,
-          passNumber, password, hostnumber
-        );
+  if (decoded && (decoded.role === "Host" || decoded.role === "security")){
+      const {
+          role, name, idNumber, documentType, gender, birthDate, age, 
+          documentExpiry, company, TelephoneNumber, vehicleNumber, 
+          category, ethnicity, photoAttributes, passNumber, password
+      } = req.body;
 
-        res.send("Pass visitor created successfully");
-      } else {
-        console.log("Access Denied!");
-        res.status(403).send("Access Denied"); // Send a 403 Forbidden response
-      }
-    } else {
-      console.log("Host not found!");
-      res.status(404).send("Host not found");
-    }
-  } catch (err) {
-    console.log("Error decoding token:", err.message);
-    res.status(401).send("Unauthorized"); // Send a 401 Unauthorized response
-  } finally {
-    await client.close();
+      await createpassVisitor(role, name, idNumber, documentType, gender, birthDate, 
+                              age, documentExpiry, company, TelephoneNumber, 
+                              vehicleNumber, category, ethnicity, photoAttributes, 
+                              passNumber, password, hostnumber);
+  } else {
+      console.log("Access Denied!");
+      res.status(403).send("Access Denied"); // Send a 403 Forbidden response
   }
 });
-
 
 
 
